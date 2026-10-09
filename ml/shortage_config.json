@@ -1,0 +1,12 @@
+{
+  "units": "MLD",
+  "risk_thresholds_pct": {
+    "low_max": 10.0,
+    "medium_max": 25.0,
+    "high_max": 40.0,
+    "critical_min": 40.0
+  },
+  "cpheeo_benchmark_lpcd": 135.0,
+  "non_domestic_factor": 1.15,
+  "threshold_description": "Configurable risk thresholds: Low (<10%), Medium (10-25%), High (25-40%), Critical (>=40%). These are engineering risk triggers for municipal action."
+}

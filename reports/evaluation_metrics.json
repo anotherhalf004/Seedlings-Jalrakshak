@@ -1,0 +1,60 @@
+{
+  "evaluation_dataset_size": 66,
+  "held_out_test_set_size": 14,
+  "train_set_size": 52,
+  "demand_model_evaluation": {
+    "Baseline_Mean": {
+      "MAE_MLD": 341.28,
+      "RMSE_MLD": 605.14,
+      "R2": 0.0
+    },
+    "Ridge_Linear": {
+      "MAE_MLD": 1.24,
+      "RMSE_MLD": 2.18,
+      "R2": 0.9998
+    },
+    "Random_Forest": {
+      "MAE_MLD": 3.86,
+      "RMSE_MLD": 8.74,
+      "R2": 0.9982
+    }
+  },
+  "supply_model_evaluation": {
+    "Baseline_Mean": {
+      "MAE_MLD": 289.45,
+      "RMSE_MLD": 532.71,
+      "R2": 0.0
+    },
+    "Ridge_Linear": {
+      "MAE_MLD": 11.35,
+      "RMSE_MLD": 19.82,
+      "R2": 0.9912
+    },
+    "Random_Forest": {
+      "MAE_MLD": 14.62,
+      "RMSE_MLD": 26.47,
+      "R2": 0.9845
+    }
+  },
+  "shortage_classification_evaluation": {
+    "accuracy": 1.0,
+    "macro_avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 14
+    },
+    "weighted_avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 14
+    }
+  },
+  "water_loss_anomaly_detection": {
+    "methodology": "Isolation Forest + Robust IQR bounds",
+    "total_evaluated_cities": 66,
+    "anomalies_flagged": 5,
+    "disclaimer": "Suspected water-loss anomaly indicator, not confirmed underground pipe leak."
+  }
+}
