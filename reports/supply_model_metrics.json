@@ -1,0 +1,37 @@
+{
+  "Baseline_Mean": {
+    "exact_accuracy_pct": 45.05,
+    "within_1_tier_accuracy_pct": 92.75,
+    "shortage_percentage_mae": 9.49,
+    "ratio_mae": 0.0949,
+    "derived_supply_mae_mld": 32.54
+  },
+  "Ridge_Linear": {
+    "exact_accuracy_pct": 85.85,
+    "within_1_tier_accuracy_pct": 100.0,
+    "shortage_percentage_mae": 2.93,
+    "ratio_mae": 0.0293,
+    "derived_supply_mae_mld": 13.35
+  },
+  "Random_Forest": {
+    "exact_accuracy_pct": 82.31,
+    "within_1_tier_accuracy_pct": 100.0,
+    "shortage_percentage_mae": 2.9,
+    "ratio_mae": 0.029,
+    "derived_supply_mae_mld": 13.9
+  },
+  "Hist_Gradient_Boosting": {
+    "exact_accuracy_pct": 66.2,
+    "within_1_tier_accuracy_pct": 100.0,
+    "shortage_percentage_mae": 5.1,
+    "ratio_mae": 0.051,
+    "derived_supply_mae_mld": 16.03
+  },
+  "Gradient_Boosting": {
+    "exact_accuracy_pct": 86.68,
+    "within_1_tier_accuracy_pct": 100.0,
+    "shortage_percentage_mae": 2.62,
+    "ratio_mae": 0.0262,
+    "derived_supply_mae_mld": 13.62
+  }
+}

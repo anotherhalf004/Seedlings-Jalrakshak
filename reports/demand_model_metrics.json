@@ -1,0 +1,22 @@
+{
+  "Baseline_Mean": {
+    "MAE_MLD": 245.997,
+    "RMSE_MLD": 371.819,
+    "R2_Score": -0.1661
+  },
+  "Ridge_Linear": {
+    "MAE_MLD": 6.732,
+    "RMSE_MLD": 10.667,
+    "R2_Score": 0.998
+  },
+  "Random_Forest": {
+    "MAE_MLD": 51.627,
+    "RMSE_MLD": 135.6,
+    "R2_Score": 0.8746
+  },
+  "Hist_Gradient_Boosting": {
+    "MAE_MLD": 188.985,
+    "RMSE_MLD": 304.799,
+    "R2_Score": 0.2016
+  }
+}

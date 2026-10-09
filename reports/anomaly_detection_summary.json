@@ -1,0 +1,65 @@
+{
+  "total_evaluated_cities": 69,
+  "anomalies_detected": 7,
+  "upper_iqr_loss_threshold_pct": 31.14,
+  "flagged_cities": [
+    {
+      "city": "Delhi",
+      "state_ut": "Delhi",
+      "unaccounted_water_mld": 424.31,
+      "nrw_loss_percentage": 16.28,
+      "groundwater_stress_index": 25.63,
+      "anomaly_score": -0.165
+    },
+    {
+      "city": "Bangalore",
+      "state_ut": "Karnataka",
+      "unaccounted_water_mld": 176.3,
+      "nrw_loss_percentage": 20.0,
+      "groundwater_stress_index": 58.81,
+      "anomaly_score": -0.0124
+    },
+    {
+      "city": "Mumbai Suburban",
+      "state_ut": "Maharashtra",
+      "unaccounted_water_mld": 221.37,
+      "nrw_loss_percentage": 18.3,
+      "groundwater_stress_index": 28.51,
+      "anomaly_score": -0.0257
+    },
+    {
+      "city": "Patiala",
+      "state_ut": "Punjab",
+      "unaccounted_water_mld": 5.04,
+      "nrw_loss_percentage": 20.0,
+      "groundwater_stress_index": 100.0,
+      "anomaly_score": -0.0668
+    },
+    {
+      "city": "Jaipur",
+      "state_ut": "Rajasthan",
+      "unaccounted_water_mld": 69.6,
+      "nrw_loss_percentage": 26.7,
+      "groundwater_stress_index": 70.91,
+      "anomaly_score": -0.0813
+    },
+    {
+      "city": "Kota",
+      "state_ut": "Rajasthan",
+      "unaccounted_water_mld": 25.94,
+      "nrw_loss_percentage": 26.4,
+      "groundwater_stress_index": 65.0,
+      "anomaly_score": -0.0355
+    },
+    {
+      "city": "Kolkata (Confined)",
+      "state_ut": "West Bengal",
+      "unaccounted_water_mld": 121.39,
+      "nrw_loss_percentage": 26.05,
+      "groundwater_stress_index": 48.75,
+      "anomaly_score": -0.0916
+    }
+  ],
+  "methodology": "Isolation Forest (contamination=0.10) + Robust IQR bounds",
+  "disclaimer": "Suspected water-loss anomaly indicator, not confirmed underground pipe leak."
+}

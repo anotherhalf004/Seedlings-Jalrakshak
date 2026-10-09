@@ -65,7 +65,8 @@ def predict_water_crisis(
     # 3. Supply Capacity Estimation
     gw_availability_factor = max(0.40, (1.0 - (gsvi_score / 150.0)))
     tap_connectivity_factor = (state_tap_water_coverage_pct / 100.0) * 0.35 + 0.65
-    estimated_supply_mld = round(base_demand_mld * gw_availability_factor * tap_connectivity_factor, 2)
+    supply_ratio = round(gw_availability_factor * tap_connectivity_factor, 4)
+    estimated_supply_mld = round(base_demand_mld * supply_ratio, 2)
     
     # Try using trained ML models if saved models exist
     demand_model_path = "models/demand_model.joblib"
@@ -76,12 +77,18 @@ def predict_water_crisis(
             d_pkg = joblib.load(demand_model_path)
             s_pkg = joblib.load(supply_model_path)
             
+            d_features = d_pkg.get("features", ["population_estimated", "state_tap_water_coverage_pct", "monitoring_wells_count"])
             X_d = pd.DataFrame([{
                 "population_estimated": population,
                 "state_tap_water_coverage_pct": state_tap_water_coverage_pct,
                 "monitoring_wells_count": monitoring_wells_count
-            }])
+            }])[d_features]
             
+            s_features = s_pkg.get("features", [
+                "population_estimated", "gw_fall_pct", "gw_fall_gt_4m_pct", "gw_rise_pct",
+                "state_tap_water_coverage_pct", "rainfall_period_actual_mm", "rainfall_period_dep_pct",
+                "groundwater_stress_index"
+            ])
             X_s = pd.DataFrame([{
                 "population_estimated": population,
                 "gw_fall_pct": gw_fall_pct,
@@ -91,10 +98,21 @@ def predict_water_crisis(
                 "rainfall_period_actual_mm": rainfall_period_actual_mm,
                 "rainfall_period_dep_pct": rainfall_period_dep_pct,
                 "groundwater_stress_index": gsvi_score
-            }])
+            }])[s_features]
             
+            # Predict Demand MLD using trained Ridge regression
             base_demand_mld = round(float(d_pkg["model"].predict(X_d)[0]), 2)
-            estimated_supply_mld = round(float(s_pkg["model"].predict(X_s)[0]), 2)
+            
+            # Predict Supply Ratio using trained Gradient Boosting regression
+            target_type = s_pkg.get("target", s_pkg.get("model_type", "supply_ratio"))
+            if target_type in ["supply_ratio", "ratio"]:
+                raw_ratio = float(s_pkg["model"].predict(X_s)[0])
+                supply_ratio = round(max(0.10, min(1.0, raw_ratio)), 4)
+                # Compute supply MLD = demand * ratio
+                estimated_supply_mld = round(base_demand_mld * supply_ratio, 2)
+            else:
+                estimated_supply_mld = round(float(s_pkg["model"].predict(X_s)[0]), 2)
+                supply_ratio = round((estimated_supply_mld / base_demand_mld), 4) if base_demand_mld > 0 else 1.0
         except Exception as e:
             pass # Gracefully fall back to engineering formulas
             
@@ -115,6 +133,7 @@ def predict_water_crisis(
         "groundwater_stress_index": gsvi_score,
         "water_balance": {
             "predicted_demand_mld": shortage_info["predicted_demand_mld"],
+            "predicted_supply_ratio": supply_ratio,
             "predicted_supply_mld": shortage_info["predicted_supply_mld"],
             "estimated_shortage_mld": shortage_info["shortage_amount_mld"],
             "shortage_percentage": shortage_info["shortage_percentage"],

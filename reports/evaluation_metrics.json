@@ -1,60 +1,73 @@
 {
-  "evaluation_dataset_size": 66,
+  "evaluation_dataset_size": 69,
   "held_out_test_set_size": 14,
-  "train_set_size": 52,
-  "demand_model_evaluation": {
-    "Baseline_Mean": {
-      "MAE_MLD": 341.28,
-      "RMSE_MLD": 605.14,
-      "R2": 0.0
-    },
-    "Ridge_Linear": {
-      "MAE_MLD": 1.24,
-      "RMSE_MLD": 2.18,
+  "train_set_size": 55,
+  "demand_model": {
+    "model_name": "Ridge_Linear",
+    "held_out_test_metrics": {
+      "MAE_MLD": 3.101,
+      "RMSE_MLD": 4.478,
       "R2": 0.9998
-    },
-    "Random_Forest": {
-      "MAE_MLD": 3.86,
-      "RMSE_MLD": 8.74,
-      "R2": 0.9982
     }
   },
-  "supply_model_evaluation": {
-    "Baseline_Mean": {
-      "MAE_MLD": 289.45,
-      "RMSE_MLD": 532.71,
-      "R2": 0.0
-    },
-    "Ridge_Linear": {
-      "MAE_MLD": 11.35,
-      "RMSE_MLD": 19.82,
-      "R2": 0.9912
-    },
-    "Random_Forest": {
-      "MAE_MLD": 14.62,
-      "RMSE_MLD": 26.47,
-      "R2": 0.9845
+  "supply_model": {
+    "model_name": "Gradient_Boosting",
+    "model_type": "supply_ratio",
+    "held_out_test_metrics": {
+      "MAE_MLD": 3.672,
+      "RMSE_MLD": 5.349,
+      "R2": 0.9994
     }
   },
   "shortage_classification_evaluation": {
-    "accuracy": 1.0,
-    "macro_avg": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1-score": 1.0,
-      "support": 14
+    "held_out_test_exact_accuracy_pct": 85.71,
+    "held_out_test_within_1_tier_accuracy_pct": 100.0,
+    "held_out_test_shortage_percentage_mae": 0.88,
+    "repeated_stratified_cv_metrics": {
+      "exact_accuracy_pct": 86.68,
+      "within_1_tier_accuracy_pct": 100.0,
+      "shortage_percentage_mae": 2.62,
+      "ratio_mae": 0.0262,
+      "derived_supply_mae_mld": 13.62
     },
-    "weighted_avg": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1-score": 1.0,
-      "support": 14
+    "detailed_classification_report": {
+      "Critical": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1.0
+      },
+      "High": {
+        "precision": 0.8333333333333334,
+        "recall": 0.8333333333333334,
+        "f1-score": 0.8333333333333334,
+        "support": 6.0
+      },
+      "Low": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 2.0
+      },
+      "Medium": {
+        "precision": 0.8,
+        "recall": 0.8,
+        "f1-score": 0.8,
+        "support": 5.0
+      },
+      "accuracy": 0.8571428571428571,
+      "macro avg": {
+        "precision": 0.9083333333333334,
+        "recall": 0.9083333333333334,
+        "f1-score": 0.9083333333333334,
+        "support": 14.0
+      },
+      "weighted avg": {
+        "precision": 0.8571428571428571,
+        "recall": 0.8571428571428571,
+        "f1-score": 0.8571428571428571,
+        "support": 14.0
+      }
     }
-  },
-  "water_loss_anomaly_detection": {
-    "methodology": "Isolation Forest + Robust IQR bounds",
-    "total_evaluated_cities": 66,
-    "anomalies_flagged": 5,
-    "disclaimer": "Suspected water-loss anomaly indicator, not confirmed underground pipe leak."
   }
 }
