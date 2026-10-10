@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Droplets, LayoutDashboard, Zap, FlaskConical, Wifi, WifiOff } from 'lucide-react'
+import { Droplets, LayoutDashboard, Zap, FlaskConical, Wifi, WifiOff, Sun, Moon } from 'lucide-react'
 import { checkHealth } from '../api'
 
 const NAV_ITEMS = [
@@ -10,81 +10,111 @@ const NAV_ITEMS = [
 
 export default function Layout({ activeTab, onTabChange, children }) {
   const [apiStatus, setApiStatus] = useState('checking') // 'online' | 'offline' | 'checking'
+  const [isDark, setIsDark] = useState(true)
 
   useEffect(() => {
     checkHealth()
       .then(() => setApiStatus('online'))
       .catch(() => setApiStatus('offline'))
+
+    // Check system or initial class on <html>
+    const isDarkMode = document.documentElement.classList.contains('dark')
+    setIsDark(isDarkMode)
   }, [])
 
+  const toggleTheme = () => {
+    const nextDark = !isDark
+    setIsDark(nextDark)
+    if (nextDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
+
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(160deg, #060d1f 0%, #0b132b 50%, #060d1f 100%)' }}>
-      {/* Top nav */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06]" style={{ background: 'rgba(6,13,31,0.85)', backdropFilter: 'blur(20px)' }}>
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200">
+      {/* Top navbar */}
+      <header className="sticky top-0 z-40 bg-sidebar/85 border-b border-sidebar-border backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Brand */}
-            <div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, rgba(0,240,255,0.25), rgba(58,134,255,0.25))', border: '1px solid rgba(0,240,255,0.25)' }}
-              >
-                <Droplets size={16} style={{ color: '#00f0ff' }} />
+            {/* Brand logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xs">
+                <Droplets size={18} className="animate-pulse-slow" />
               </div>
               <div>
-                <span className="font-bold font-display text-sm gradient-text-cyan">JalRakshak</span>
-                <span className="hidden sm:inline text-slate-500 text-xs ml-1.5">Water Intelligence</span>
+                <span className="font-bold text-base tracking-tight font-sans text-foreground">JalRakshak</span>
+                <span className="hidden sm:inline text-muted-foreground text-xs ml-2 font-medium">
+                  Water Intelligence Platform
+                </span>
               </div>
             </div>
 
             {/* Nav tabs */}
-            <nav className="flex items-center gap-1">
+            <nav className="flex items-center gap-1.5 bg-muted/50 p-1 rounded-xl border border-border">
               {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   id={`nav-${id}`}
                   onClick={() => onTabChange(id)}
-                  className={`nav-link flex items-center gap-1.5 ${activeTab === id ? 'active' : ''}`}
+                  className={`nav-link flex items-center gap-2 ${activeTab === id ? 'active' : ''}`}
                 >
-                  <Icon size={14} />
-                  <span className="hidden sm:inline">{label}</span>
+                  <Icon size={15} />
+                  <span className="hidden sm:inline font-medium">{label}</span>
                 </button>
               ))}
             </nav>
 
-            {/* API status */}
-            <div className="flex items-center gap-2">
-              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border ${
-                apiStatus === 'online'
-                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                  : apiStatus === 'offline'
-                  ? 'text-red-400 bg-red-500/10 border-red-500/20'
-                  : 'text-slate-400 bg-slate-500/10 border-slate-500/20'
-              }`}>
-                {apiStatus === 'online' ? <Wifi size={11} /> : <WifiOff size={11} />}
-                <span className="hidden sm:inline">{apiStatus === 'online' ? 'API Online' : apiStatus === 'offline' ? 'API Offline' : 'Connecting…'}</span>
+            {/* Actions & Status */}
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={toggleTheme}
+                title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="p-2 rounded-xl bg-muted text-muted-foreground hover:text-foreground border border-border transition-colors"
+              >
+                {isDark ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium border transition-colors ${
+                  apiStatus === 'online'
+                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                    : apiStatus === 'offline'
+                    ? 'text-destructive bg-destructive/10 border-destructive/20'
+                    : 'text-muted-foreground bg-muted border-border'
+                }`}
+              >
+                {apiStatus === 'online' ? <Wifi size={12} /> : <WifiOff size={12} />}
+                <span className="hidden sm:inline">
+                  {apiStatus === 'online' ? 'API Active' : apiStatus === 'offline' ? 'API Offline' : 'Connecting…'}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Container */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 animate-fade-up">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.04] py-4 px-6">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-slate-600">
-          <span>JalRakshak · Smart Water Crisis & Leakage Prevention</span>
-          <span className="flex items-center gap-1">
-            <span>Data: CGWB · IMD · JJM · Census 2011</span>
-            <span className="mx-2">·</span>
-            <span>ML: Ridge + GBM + IsoForest</span>
-          </span>
+      <footer className="border-t border-border py-6 px-6 bg-sidebar/50 text-xs text-muted-foreground">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">JalRakshak</span>
+            <span>· National Water Crisis & Shortage Intelligence</span>
+          </div>
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span>Sources: CGWB · IMD · JJM · Census 2011</span>
+            <span>·</span>
+            <span>ML: Ridge + Gradient Boosting</span>
+          </div>
         </div>
       </footer>
     </div>
   )
 }
+

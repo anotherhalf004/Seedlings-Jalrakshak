@@ -22,11 +22,11 @@ const FIELD_DEFAULTS = {
 function FieldRow({ label, id, children, hint }) {
   return (
     <div>
-      <label htmlFor={id} className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5 block">
+      <label htmlFor={id} className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
         {label}
       </label>
       {children}
-      {hint && <p className="text-xs text-slate-600 mt-1">{hint}</p>}
+      {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
     </div>
   )
 }
@@ -42,9 +42,8 @@ function SliderField({ id, label, value, min, max, step = 1, unit = '', onChange
           value={value}
           onChange={(e) => onChange(+e.target.value)}
           className="flex-1"
-          style={{ accentColor: '#00f0ff' }}
         />
-        <span className="text-sm font-bold font-display text-cyan-glow tabular-nums w-16 text-right">
+        <span className="text-sm font-bold font-mono text-primary tabular-nums w-16 text-right">
           {value}{unit}
         </span>
       </div>
@@ -101,17 +100,20 @@ export default function Predictor({ cities }) {
     <div className="grid lg:grid-cols-5 gap-6">
       {/* Form panel */}
       <div className="lg:col-span-2">
-        <div className="glass rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-cyan-glow/15 flex items-center justify-center">
-              <Zap size={16} className="text-cyan-glow" />
+        <div className="glass-panel p-6">
+          <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-border">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <Zap size={18} />
             </div>
-            <h2 className="text-lg font-bold font-display text-slate-100">ML Predictor</h2>
+            <div>
+              <h2 className="text-lg font-bold text-foreground font-sans">ML Shortage Predictor</h2>
+              <p className="text-xs text-muted-foreground">Run predictive model inference</p>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* City */}
-            <FieldRow id="city" label="City Name" hint="Type or pick from monitored cities">
+            <FieldRow id="city" label="City Name" hint="Type or select monitored city">
               <input
                 id="city"
                 type="text"
@@ -119,7 +121,7 @@ export default function Predictor({ cities }) {
                 placeholder="e.g. Bengaluru"
                 value={form.city}
                 onChange={(e) => { set('city', e.target.value); autofill(e.target.value) }}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-glow/40 transition-colors"
+                className="w-full px-4 py-2.5 bg-muted/50 border border-input rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                 required
               />
               <datalist id="city-list">
@@ -128,28 +130,28 @@ export default function Predictor({ cities }) {
             </FieldRow>
 
             {/* Population */}
-            <FieldRow id="population" label="Population" hint="Leave blank to auto-estimate">
+            <FieldRow id="population" label="Population" hint="Leave blank for census auto-estimate">
               <input
                 id="population"
                 type="number"
                 placeholder="Auto-estimated from census"
                 value={form.population}
                 onChange={(e) => set('population', e.target.value)}
-                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-glow/40 transition-colors"
+                className="w-full px-4 py-2.5 bg-muted/50 border border-input rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all font-mono"
               />
             </FieldRow>
 
-            <SliderField id="gw_fall_pct" label="Groundwater Fall %" value={form.gw_fall_pct} min={0} max={100} unit="%" onChange={(v) => set('gw_fall_pct', v)} hint="% wells with declining water table" />
+            <SliderField id="gw_fall_pct" label="Groundwater Fall %" value={form.gw_fall_pct} min={0} max={100} unit="%" onChange={(v) => set('gw_fall_pct', v)} hint="% wells with declining table" />
             <SliderField id="gw_fall_gt4" label="GW Fall >4m %" value={form.gw_fall_gt_4m_pct} min={0} max={100} unit="%" onChange={(v) => set('gw_fall_gt_4m_pct', v)} />
             <SliderField id="gw_rise_pct" label="Groundwater Rise %" value={form.gw_rise_pct} min={0} max={100} unit="%" onChange={(v) => set('gw_rise_pct', v)} />
             <SliderField id="tap_pct" label="Tap Water Coverage" value={form.state_tap_water_coverage_pct} min={0} max={100} unit="%" onChange={(v) => set('state_tap_water_coverage_pct', v)} hint="JJM Har Ghar Jal %" />
             <SliderField id="rain_mm" label="Rainfall (Period)" value={form.rainfall_period_actual_mm} min={0} max={500} unit="mm" onChange={(v) => set('rainfall_period_actual_mm', v)} />
-            <SliderField id="rain_dep" label="Rainfall Departure" value={form.rainfall_period_dep_pct} min={-100} max={200} unit="%" onChange={(v) => set('rainfall_period_dep_pct', v)} hint="% deviation from IMD normal" />
+            <SliderField id="rain_dep" label="Rainfall Departure" value={form.rainfall_period_dep_pct} min={-100} max={200} unit="%" onChange={(v) => set('rainfall_period_dep_pct', v)} hint="% deviation from normal" />
             <SliderField id="wells" label="Monitoring Wells" value={form.monitoring_wells_count} min={1} max={100} onChange={(v) => set('monitoring_wells_count', v)} />
 
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                <AlertCircle size={14} /> {error}
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+                <AlertCircle size={15} /> {error}
               </div>
             )}
 
@@ -157,54 +159,49 @@ export default function Predictor({ cities }) {
               id="predict-submit"
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200"
-              style={{
-                background: loading ? 'rgba(0,240,255,0.1)' : 'linear-gradient(135deg, #00f0ff, #3a86ff)',
-                color: loading ? '#00f0ff' : '#000',
-                boxShadow: loading ? 'none' : '0 0 20px rgba(0,240,255,0.3)',
-              }}
+              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-primary text-primary-foreground shadow-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              {loading ? <><Loader2 size={16} className="animate-spin" /> Predicting…</> : <><Send size={16} /> Run Prediction</>}
+              {loading ? <><Loader2 size={16} className="animate-spin" /> Running Prediction…</> : <><Send size={16} /> Run Prediction</>}
             </button>
           </form>
         </div>
       </div>
 
       {/* Results panel */}
-      <div className="lg:col-span-3 space-y-4">
+      <div className="lg:col-span-3 space-y-5">
         {!result && !loading && (
-          <div className="glass rounded-2xl p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
-            <div className="w-16 h-16 rounded-2xl bg-cyan-glow/10 flex items-center justify-center mb-4 animate-float">
-              <Zap size={28} className="text-cyan-glow opacity-60" />
+          <div className="glass-panel p-12 flex flex-col items-center justify-center text-center min-h-[440px]">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 text-primary animate-float">
+              <Zap size={28} />
             </div>
-            <p className="text-slate-400 font-medium">Configure parameters and run prediction</p>
-            <p className="text-slate-600 text-sm mt-1">The ML model will forecast demand, supply, shortage risk, and NRW loss anomaly</p>
+            <p className="text-foreground font-semibold text-base">Select parameters to predict water shortage</p>
+            <p className="text-muted-foreground text-sm mt-1 max-w-sm">The ML pipeline will calculate demand projections, groundwater stress levels, and NRW loss anomalies.</p>
           </div>
         )}
 
         {result && wb && (
           <>
             {/* Header */}
-            <div className="glass-bright rounded-2xl p-5 border border-cyan-glow/20">
-              <div className="flex items-center justify-between mb-1">
+            <div className="glass-panel p-6 border-primary/20 bg-primary/5">
+              <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h3 className="text-xl font-bold font-display text-slate-100">{result.city}</h3>
-                  <p className="text-xs text-slate-500">{result.forecast_period} · Pop {(result.population / 1e6).toFixed(2)}M</p>
+                  <h3 className="text-2xl font-extrabold text-foreground font-sans">{result.city}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{result.forecast_period} · Pop {(result.population / 1e6).toFixed(2)}M</p>
                 </div>
                 <RiskBadge tier={wb.risk_tier} />
               </div>
-              <div className="flex items-center gap-2 mt-3">
-                <CheckCircle2 size={14} className="text-emerald-400" />
-                <span className="text-xs text-emerald-400">{result.model_metadata?.prediction_status}</span>
-                <span className="text-slate-600 text-xs mx-1">·</span>
-                <span className="text-xs text-slate-500">{result.model_metadata?.benchmark_standard}</span>
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50 text-xs">
+                <CheckCircle2 size={15} className="text-emerald-500" />
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{result.model_metadata?.prediction_status}</span>
+                <span className="text-muted-foreground mx-1">·</span>
+                <span className="text-muted-foreground">{result.model_metadata?.benchmark_standard}</span>
               </div>
             </div>
 
-            {/* Gauge + radar */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Gauge + Radar */}
+            <div className="grid sm:grid-cols-2 gap-4">
               <div className="chart-container">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Shortage Level</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Shortage Risk Gauge</p>
                 <ShortageGauge shortage_pct={wb.shortage_percentage} height={210} />
               </div>
               <GroundwaterRadar
@@ -220,29 +217,29 @@ export default function Predictor({ cities }) {
               />
             </div>
 
-            {/* Water balance stats */}
+            {/* Stats Breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              <MiniStatCard label="Predicted Demand" value={wb.predicted_demand_mld?.toFixed(0)} unit="MLD" color="#3a86ff" />
-              <MiniStatCard label="Supply Capacity" value={wb.predicted_supply_mld?.toFixed(0)} unit="MLD" color="#00f0ff" />
-              <MiniStatCard label="Shortage" value={wb.estimated_shortage_mld?.toFixed(0)} unit="MLD" color="#ef4444" />
-              <MiniStatCard label="Supply Ratio" value={(wb.predicted_supply_ratio * 100).toFixed(1)} unit="%" color="#a78bfa" />
-              <MiniStatCard label="NRW Loss Est." value={result.water_loss_diagnostics?.estimated_nrw_loss_percentage?.toFixed(1)} unit="%" color="#f59e0b" />
-              <MiniStatCard label="Unaccounted" value={result.water_loss_diagnostics?.estimated_unaccounted_water_mld?.toFixed(0)} unit="MLD" color="#f97316" />
+              <MiniStatCard label="Predicted Demand" value={wb.predicted_demand_mld?.toFixed(0)} unit="MLD" color="text-primary" />
+              <MiniStatCard label="Supply Capacity" value={wb.predicted_supply_mld?.toFixed(0)} unit="MLD" color="text-emerald-500" />
+              <MiniStatCard label="Shortage" value={wb.estimated_shortage_mld?.toFixed(0)} unit="MLD" color="text-destructive" />
+              <MiniStatCard label="Supply Ratio" value={(wb.predicted_supply_ratio * 100).toFixed(1)} unit="%" color="text-purple-500" />
+              <MiniStatCard label="NRW Loss Est." value={result.water_loss_diagnostics?.estimated_nrw_loss_percentage?.toFixed(1)} unit="%" color="text-amber-500" />
+              <MiniStatCard label="Unaccounted Water" value={result.water_loss_diagnostics?.estimated_unaccounted_water_mld?.toFixed(0)} unit="MLD" color="text-orange-500" />
             </div>
 
             {/* Advisory */}
-            <div className="glass rounded-2xl p-4 border border-amber-500/20">
-              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">Advisory</p>
-              <p className="text-sm text-slate-300 leading-relaxed">{result.advisory}</p>
+            <div className="glass-panel p-5 border-amber-500/30 bg-amber-500/5">
+              <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1.5">Model Action Advisory</p>
+              <p className="text-sm text-foreground leading-relaxed">{result.advisory}</p>
             </div>
 
-            {/* Loss anomaly */}
+            {/* Anomaly */}
             {result.water_loss_diagnostics?.suspected_loss_anomaly_flag && (
-              <div className="glass rounded-2xl p-4 border border-red-500/30 flex items-start gap-3">
-                <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="glass-panel p-5 border-destructive/30 bg-destructive/5 flex items-start gap-3">
+                <AlertCircle size={18} className="text-destructive flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-1">Anomaly Detected</p>
-                  <p className="text-sm text-slate-300">{result.water_loss_diagnostics.disclaimer}</p>
+                  <p className="text-xs font-semibold text-destructive uppercase tracking-wider mb-1">Loss Anomaly Detected</p>
+                  <p className="text-sm text-foreground">{result.water_loss_diagnostics.disclaimer}</p>
                 </div>
               </div>
             )}
@@ -252,3 +249,4 @@ export default function Predictor({ cities }) {
     </div>
   )
 }
+
