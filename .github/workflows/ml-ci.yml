@@ -16,6 +16,9 @@ on:
       - "models/**"
       - "requirements.txt"
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
