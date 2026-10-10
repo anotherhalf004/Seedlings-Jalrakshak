@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["-y", "shadcn@latest", "mcp"]
+    },
+    "refero": {
+      "serverUrl": "https://api.refero.design/mcp",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer mcp-Qj1rYPf22QEx9eDs"
+      }
+    }
+  }
+}
