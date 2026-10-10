@@ -1,21 +1,31 @@
-# JalRakshak — Smart Water Crisis & Leakage Prevention (ML Pipeline)
+# JalRakshak — Smart Water Crisis & Leakage Prevention (ML & Full-Stack Platform)
 
-JalRakshak is a data-driven machine learning system designed to forecast urban water demand and supply, estimate water shortages, evaluate crisis risk tiers, and detect suspected distribution water-loss anomalies across Indian cities.
+JalRakshak is an AI-powered municipal water intelligence system that forecasts urban water demand and supply, computes localized water deficits, classifies crisis risk tiers, and detects distribution loss anomalies across 69 Indian urban centers.
 
 ---
 
 ## 📁 Project Architecture & Directory Structure
 
+[![Architecture diagram of anotherhalf004/seedlings-jalrakshak](https://gitdiagram.com/anotherhalf004/seedlings-jalrakshak/diagram.png)](https://gitdiagram.com/anotherhalf004/seedlings-jalrakshak?utm_source=readme&utm_medium=picture)
+
 ```text
 AWS-Jalrakshak/
+├── backend/                               # FastAPI backend service
+│   ├── main.py                            # Production API endpoints, CORS & fuzzy city matcher
+│   └── test_api.py                        # Automated regression and integration tests
+├── frontend/                              # High-performance React 19 + Vite dashboard
+│   ├── src/
+│   │   ├── components/                    # UI Components (CityWaterMap, Charts, StatCard, GooeyNav, etc.)
+│   │   ├── pages/                         # Dashboard, Predictor, and Simulator pages
+│   │   ├── lib/                           # Utility functions & theme color mappings
+│   │   └── api.js                         # API service client with dev proxy integration
+│   ├── index.html                         # App root with dark mode baseline
+│   ├── vite.config.js                     # Vite bundler configuration & proxy
+│   └── package.json                       # React dependencies & scripts
 ├── data/
-│   ├── raw/                               # Parsed official raw datasets
-│   │   ├── census_2011_state_population.csv
-│   │   ├── jjm_tap_water_state_status.csv
-│   │   ├── cgwb_groundwater_decadal_cities.csv
-│   │   └── imd_district_rainfall_oct2026.csv
-│   └── processed/
-│       └── jalrakshak_master.csv          # Cleaned, unified 66-city master dataset
+│   ├── raw/                               # Official source datasets (CGWB, IMD, JJM, Census)
+│   └── final/
+│       └── jalrakshak_master.csv          # Cleaned, unified 69-city master dataset
 ├── ml/
 │   ├── data_audit.py                      # Phase 1: Data profiling and validation
 │   ├── preprocessing.py                   # Phase 2: Data engineering & master generation
@@ -23,14 +33,11 @@ AWS-Jalrakshak/
 │   ├── shortage_config.json               # Configurable risk thresholds
 │   ├── train_demand.py                    # Phase 5: Water demand model training
 │   ├── train_supply.py                    # Phase 5: Water supply model training
-│   ├── train_anomaly.py                   # Phase 7: Suspected water-loss anomaly detection
-│   ├── evaluate.py                        # Phase 6: Rigorous held-out test evaluation
+│   ├── train_anomaly.py                   # Phase 7: Water-loss anomaly detection
+│   ├── evaluate.py                        # Phase 6: Held-out test evaluation
 │   └── predict.py                         # Phase 9: Unified inference & dashboard payload interface
-├── models/                                # Serialized models (.joblib)
+├── models/                                # Serialized ML models (.joblib)
 ├── reports/                               # Audit reports, test metrics, and predictions
-│   ├── phase_1_data_audit_report.md
-│   ├── evaluation_metrics.json
-│   └── test_predictions.csv
 ├── population/                            # 35 State/UT Census CSVs
 ├── data_dictionary.md                     # Complete column descriptions & units
 ├── requirements.txt                       # Python dependencies
@@ -41,7 +48,7 @@ AWS-Jalrakshak/
 
 ## 🧠 Machine Learning Architecture & Methodology
 
-JalRakshak employs a physical-constraint-preserving hybrid modeling architecture designed to overcome error amplification across municipal water balances:
+JalRakshak employs a physical-constraint-preserving hybrid modeling architecture designed to eliminate error amplification across municipal water balances:
 
 1. **Water Demand Model (Ridge Linear Regression)**:
    - Forecasts total design water demand in MLD based on municipal population scale, tap connectivity, and monitoring infrastructure.
@@ -80,38 +87,71 @@ Models are evaluated both on **Repeated Stratified 5-Fold Cross-Validation acros
 
 ---
 
-## ⚙️ Quickstart & Execution Commands
+## 🚀 Quickstart & Execution
 
-### 1. Install Dependencies
+### 1. Python Environment & Backend API
+
 ```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Run backend regression & integration tests
+python -m unittest backend.test_api
+
+# Start FastAPI service (port 8000)
+python backend/main.py
+# Or with uvicorn directly:
+uvicorn backend.main:app --reload --port 8000
 ```
 
-### 2. Run Data Engineering & Generate Master Dataset
+### 2. Frontend Dashboard Setup
+
 ```bash
+cd frontend
+
+# Install npm dependencies
+npm install
+
+# Start Vite dev server (port 5173 with API proxy to 8000)
+npm run dev
+
+# Run linter
+npm run lint
+
+# Build production bundle
+npm run build
+```
+
+### 3. ML Pipeline Commands (Optional Re-training)
+
+```bash
+# 1. Regenerate master dataset from raw records
 python ml/preprocessing.py
-```
 
-### 3. Train Demand, Supply Ratio & Anomaly Models
-```bash
+# 2. Retrain Demand, Supply Ratio & Anomaly models
 python ml/train_demand.py
 python ml/train_supply.py
 python ml/train_anomaly.py
-```
 
-### 4. Run Rigorous Model Evaluation
-```bash
+# 3. Run model evaluation
 python ml/evaluate.py
-```
 
-### 5. Run Live Inference for Any City
-```bash
+# 4. Run CLI inference for a city
 python ml/predict.py --city "Bengaluru" --population 8443675 --gw_fall_pct 91.67 --tap_pct 89.70 --rain_dep -11.0
 ```
 
 ---
 
-## 📊 Sample Inference Output Schema (JSON)
+## 🌐 API Specification
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Service health status and national monitoring scope |
+| `GET` | `/api/v1/cities` | All 69 monitored Indian cities with groundwater stress, demand, supply, deficit, and NRW metrics |
+| `POST` | `/api/v1/predict` | Dynamic ML prediction with intelligent fuzzy city and alias matching (`Bengaluru`/`Bangalore`, `Patna (phreatic)`, etc.) |
+| `POST` | `/api/v1/simulate` | Interactive "What-If" NRW loss reduction and crisis downgrade simulator |
+
+### Sample Inference Payload (`POST /api/v1/predict`)
 
 ```json
 {
@@ -150,16 +190,11 @@ python ml/predict.py --city "Bengaluru" --population 8443675 --gw_fall_pct 91.67
 
 ---
 
-## 🔗 Connecting to the JalRakshak Backend & React Dashboard
+## 💻 Frontend Features & UI Capabilities
 
-1. **FastAPI Service**:
-   Start backend API service with:
-   ```bash
-   uvicorn backend.main:app --reload --port 8000
-   ```
-2. **Endpoints Provided**:
-   - `GET  /api/v1/health` — API health check
-   - `GET  /api/v1/cities` — Monitored national cities with current baseline water balances
-   - `POST /api/v1/predict` — Dynamic ML prediction with environmental and demographic parameters
-   - `POST /api/v1/simulate` — Interactive "What-If" NRW loss reduction and crisis downgrade simulator
-
+- **National Water Stress Cockpit**: Real-time KPI summaries, interactive sorting & filtering across 69 cities, and diagnostic modal telemetry.
+- **Interactive Geospatial Map (`CityWaterMap`)**: Leaflet-powered visual bubble map of India showing proportional municipal demand, supply, and deficit levels, plus alternative ECharts bar matrix view.
+- **Risk Category Distribution (`RiskDistributionChart`)**: Interactive donut chart with tier selection, dynamic muted focus, and reset capabilities.
+- **Interactive ML Inference (`Predictor`)**: Dynamic parameter sliders with intelligent city autofill (resolving municipal aliases and aquifer classifications).
+- **What-If Scenario Simulator (`Simulator`)**: Models water volume recovered (MLD) and risk tier transitions upon reducing non-revenue water (NRW) distribution leakage.
+- **Dark / Light Theme Switcher**: Full token-driven color system with Tailwind CSS and CSS variables.
