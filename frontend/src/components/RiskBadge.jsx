@@ -1,10 +1,10 @@
 import { cn } from '../lib/utils'
 
 const RISK_MAP = {
-  Low:      { cls: 'risk-low',      dot: '#22c55e', label: 'Low' },
-  Medium:   { cls: 'risk-medium',   dot: '#f59e0b', label: 'Medium' },
-  High:     { cls: 'risk-high',     dot: '#f97316', label: 'High' },
-  Critical: { cls: 'risk-critical', dot: '#ef4444', label: 'Critical' },
+  Low:      { cls: 'risk-low',      dot: '#2dd4bf', label: 'Low' },
+  Medium:   { cls: 'risk-medium',   dot: '#fbbf24', label: 'Medium' },
+  High:     { cls: 'risk-high',     dot: '#fb923c', label: 'High' },
+  Critical: { cls: 'risk-critical', dot: '#fb7185', label: 'Critical' },
 }
 
 export function RiskBadge({ tier, className }) {
@@ -12,7 +12,7 @@ export function RiskBadge({ tier, className }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border',
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-sans font-semibold tracking-wide border',
         r.cls,
         className
       )}
@@ -27,5 +27,5 @@ export function RiskBadge({ tier, className }) {
 }
 
 export function getRiskColor(tier) {
-  return { Low: '#22c55e', Medium: '#f59e0b', High: '#f97316', Critical: '#ef4444' }[tier] || '#22c55e'
+  return { Low: '#2dd4bf', Medium: '#fbbf24', High: '#fb923c', Critical: '#fb7185' }[tier] || '#2dd4bf'
 }

@@ -21,10 +21,10 @@ export default function App() {
   return (
     <Layout activeTab={tab} onTabChange={setTab}>
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          <strong>Backend not reachable:</strong> {error}<br />
-          <span className="text-xs text-red-500 mt-1 block">
-            Start the API: <code className="bg-red-500/10 px-1 rounded">uvicorn backend.main:app --reload --port 8000</code>
+        <div className="mb-4 p-3 rounded bg-destructive/10 border border-destructive/20 text-destructive text-xs font-sans">
+          <strong>Backend connection error:</strong> {error}<br />
+          <span className="text-xs opacity-80 mt-1 block">
+            Start backend API: <code className="bg-destructive/10 px-1 py-0.5 rounded font-mono text-[11px]">uvicorn backend.main:app --reload --port 8000</code>
           </span>
         </div>
       )}

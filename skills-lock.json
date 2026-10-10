@@ -49,6 +49,12 @@
       "skillPath": "plugin/skills/commit-history/SKILL.md",
       "computedHash": "cf337496577dc9d7229b9f5d371c2dc0a837e4cc94ae39073eac1ab361fd0acf"
     },
+    "diagnosing-bugs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/diagnosing-bugs/SKILL.md",
+      "computedHash": "aec3686657177071076dc1586c22cdf95137c230bc74cbb5d069903d73804817"
+    },
     "forget": {
       "source": "rohitg00/agentmemory",
       "sourceType": "github",

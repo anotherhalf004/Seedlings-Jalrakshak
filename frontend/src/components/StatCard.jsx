@@ -2,35 +2,43 @@ import { cn } from '../lib/utils'
 
 export function StatCard({ icon: Icon, label, value, unit, sub, accentClass, className }) {
   return (
-    <div className={cn('stat-card group', className)}>
-      <div className="flex items-start justify-between mb-3">
-        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center border', accentClass || 'bg-primary/10 text-primary border-primary/20')}>
-          {Icon && <Icon size={18} />}
-        </div>
-        {sub && (
-          <span className="text-xs text-muted-foreground font-medium">{sub}</span>
+    <div className={cn('stat-card group relative', className)}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider">
+          {label}
+        </span>
+        {Icon && (
+          <div className={cn('w-6 h-6 rounded flex items-center justify-center border text-xs', accentClass || 'bg-primary/10 text-primary border-primary/20')}>
+            <Icon size={13} />
+          </div>
         )}
       </div>
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
+
       <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-extrabold font-sans text-foreground tabular-nums leading-none">
+        <span className="text-2xl font-mono font-bold text-foreground tabular-nums tracking-tight">
           {value}
         </span>
-        {unit && <span className="text-xs text-muted-foreground font-medium">{unit}</span>}
+        {unit && <span className="text-xs font-sans font-medium text-muted-foreground">{unit}</span>}
       </div>
+
+      {sub && (
+        <div className="mt-1.5 text-xs font-sans text-muted-foreground flex items-center gap-1.5">
+          <span className="inline-block w-1 h-1 rounded-full bg-primary/60" />
+          {sub}
+        </div>
+      )}
     </div>
   )
 }
 
 export function MiniStatCard({ label, value, unit, color = 'text-foreground' }) {
   return (
-    <div className="glass-panel p-3.5 flex flex-col gap-1 border-border">
-      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">{label}</p>
+    <div className="glass-panel p-3 flex flex-col gap-0.5 border-border">
+      <span className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
       <div className="flex items-baseline gap-1">
-        <span className={`text-xl font-bold font-mono ${color}`}>{value}</span>
-        {unit && <span className="text-xs text-muted-foreground font-mono">{unit}</span>}
+        <span className={`text-lg font-mono font-bold tabular-nums ${color}`}>{value}</span>
+        {unit && <span className="text-xs font-sans font-medium text-muted-foreground">{unit}</span>}
       </div>
     </div>
   )
 }
-

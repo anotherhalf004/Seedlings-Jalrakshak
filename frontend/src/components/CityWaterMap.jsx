@@ -109,18 +109,18 @@ function resolveCoords(rawName) {
 }
 
 function balanceColor(shortage, demand) {
-  if (shortage <= 0) return '#22c55e'
+  if (shortage <= 0) return '#2dd4bf'
   const ratio = shortage / demand
-  if (ratio < 0.2) return '#f59e0b'
-  if (ratio < 0.5) return '#f97316'
-  return '#ef4444'
+  if (ratio < 0.2) return '#fbbf24'
+  if (ratio < 0.5) return '#fb923c'
+  return '#fb7185'
 }
 
 const LEGEND = [
-  ['#22c55e', 'Surplus'],
-  ['#f59e0b', 'Mild'],
-  ['#f97316', 'Moderate'],
-  ['#ef4444', 'Severe'],
+  ['#2dd4bf', 'Surplus'],
+  ['#fbbf24', 'Mild'],
+  ['#fb923c', 'Moderate'],
+  ['#fb7185', 'Severe'],
 ]
 
 const GRID = { left: 16, right: 16, top: 28, bottom: 16, containLabel: true }
@@ -152,17 +152,17 @@ function drawBubbles(cities, L, map, onSelect) {
       color: '#fff',
       weight: 1.5,
       opacity: 0.9,
-      fillOpacity: 0.72,
+      fillOpacity: 0.75,
     })
     marker._wb = true
 
     marker.bindTooltip(
-      `<div style="font-family:Inter,sans-serif;font-size:12px;line-height:1.7;min-width:160px;padding:2px 4px">
-        <b style="font-size:13px;color:#0b72f9">${label}</b><br/>
-        <span style="color:#62627a">Demand :</span> <b>${demand} MLD</b><br/>
-        <span style="color:#62627a">Supply  :</span> <b>${supply} MLD</b><br/>
-        <span style="color:#62627a">Shortage:</span> <b style="color:${color}">${shortage > 0 ? shortage : 0} MLD</b>
-        ${onSelect ? '<br/><span style="font-size:10px;color:#0b72f9;opacity:0.8">Click to view deep dive →</span>' : ''}
+      `<div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;line-height:1.7;min-width:160px;padding:2px 4px">
+        <b style="font-size:13px;color:#2dd4bf">${label}</b><br/>
+        <span style="color:#7e92a8">Demand :</span> <b>${demand} MLD</b><br/>
+        <span style="color:#7e92a8">Supply  :</span> <b>${supply} MLD</b><br/>
+        <span style="color:#7e92a8">Shortage:</span> <b style="color:${color}">${shortage > 0 ? shortage : 0} MLD</b>
+        ${onSelect ? '<br/><span style="font-size:10px;color:#2dd4bf;opacity:0.85">Click for diagnostic telemetry →</span>' : ''}
       </div>`,
       { direction: 'top', offset: [0, -(radius + 2)], opacity: 1, className: 'water-map-tooltip' }
     )
@@ -269,15 +269,15 @@ export function CityWaterMap({ cities, height = 340, onSelect }) {
         name: 'Demand',
         type: 'bar',
         data: demand,
-        barMaxWidth: 18,
-        itemStyle: { color: 'rgb(11, 114, 249)', borderRadius: [4, 4, 0, 0] },
+        barMaxWidth: 16,
+        itemStyle: { color: 'var(--primary)', borderRadius: [3, 3, 0, 0] },
       },
       {
         name: 'Supply',
         type: 'bar',
         data: supply,
-        barMaxWidth: 18,
-        itemStyle: { color: 'rgb(4, 195, 220)', borderRadius: [4, 4, 0, 0] },
+        barMaxWidth: 16,
+        itemStyle: { color: 'var(--chart-2)', borderRadius: [3, 3, 0, 0] },
       },
       {
         name: 'Shortage',
@@ -285,49 +285,49 @@ export function CityWaterMap({ cities, height = 340, onSelect }) {
         data: shortage,
         smooth: true,
         symbol: 'circle',
-        symbolSize: 6,
-        lineStyle: { color: 'rgb(239, 68, 68)', width: 2 },
-        itemStyle: { color: 'rgb(239, 68, 68)' },
+        symbolSize: 5,
+        lineStyle: { color: 'var(--destructive)', width: 2 },
+        itemStyle: { color: 'var(--destructive)' },
       },
     ],
   }
 
   return (
     <div className="chart-container">
-      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-            Water Balance — Top 20 Cities (MLD)
-          </h3>
-          <div className="inline-flex rounded-lg p-0.5 bg-muted border border-border">
+      <div className="flex items-center justify-between mb-2.5 flex-wrap gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-wider">
+            Water Balance — Top 20 Urban Hubs
+          </span>
+          <div className="inline-flex rounded p-0.5 bg-muted border border-border">
             <button
               onClick={() => setViewMode('map')}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 py-0.5 text-[11px] font-sans font-semibold tracking-wider rounded transition-all ${
                 viewMode === 'map'
-                  ? 'bg-card text-foreground shadow-sm'
+                  ? 'bg-card text-foreground shadow-2xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              🗺️ Map
+              MAP
             </button>
             <button
               onClick={() => setViewMode('bar')}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+              className={`px-2 py-0.5 text-[11px] font-sans font-semibold tracking-wider rounded transition-all ${
                 viewMode === 'bar'
-                  ? 'bg-card text-foreground shadow-sm'
+                  ? 'bg-card text-foreground shadow-2xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              📊 Bar Chart
+              BAR MATRIX
             </button>
           </div>
         </div>
 
         {viewMode === 'map' && (
-          <div className="flex gap-3 flex-wrap">
+          <div className="flex gap-2.5 flex-wrap">
             {LEGEND.map(([color, label]) => (
-              <span key={label} className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
+              <span key={label} className="flex items-center gap-1.5 text-xs font-sans text-muted-foreground">
+                <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
                 {label}
               </span>
             ))}
@@ -338,7 +338,7 @@ export function CityWaterMap({ cities, height = 340, onSelect }) {
       {viewMode === 'map' ? (
         <div
           ref={containerRef}
-          style={{ height, borderRadius: '0.5rem', overflow: 'hidden', zIndex: 0 }}
+          style={{ height, borderRadius: '0.375rem', overflow: 'hidden', zIndex: 0 }}
         />
       ) : (
         <ReactECharts option={barOption} style={{ height }} notMerge />

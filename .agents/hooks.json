@@ -1,0 +1,23 @@
+{
+  "hooks": [
+    {
+      "name": "memory-on-file-edit",
+      "event": "AfterToolCall",
+      "tools": ["replace_file_content", "multi_replace_file_content", "write_to_file"],
+      "command": "node -e \"const fs=require('fs');const tool=process.env.TOOL_NAME||'file-edit';const args=JSON.parse(process.env.TOOL_ARGS||'{}');const file=args.TargetFile||'';const desc=args.Description||args.Instruction||'file changed';fetch('http://localhost:3111/observations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+fs.readFileSync(process.env.USERPROFILE+'/.agentmemory/secret','utf8').trim()},body:JSON.stringify({content:'[auto] '+tool+': '+desc+(file?' — '+file:''),concepts:'file-change,auto-capture,jalrakshak',files:file?[file]:[]})}).catch(()=>{});\"",
+      "description": "Auto-save a memory observation whenever a file is edited in the workspace."
+    },
+    {
+      "name": "memory-session-start",
+      "event": "SessionStart",
+      "command": "node -e \"const fs=require('fs');fetch('http://localhost:3111/observations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+fs.readFileSync(process.env.USERPROFILE+'/.agentmemory/secret','utf8').trim()},body:JSON.stringify({content:'[session-start] New agent session started for JalRakshak project.',concepts:'session-start,jalrakshak',files:[]})}).catch(()=>{});\"",
+      "description": "Log a session-start observation to agentmemory."
+    },
+    {
+      "name": "memory-session-end",
+      "event": "SessionEnd",
+      "command": "node -e \"const fs=require('fs');fetch('http://localhost:3111/observations',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+fs.readFileSync(process.env.USERPROFILE+'/.agentmemory/secret','utf8').trim()},body:JSON.stringify({content:'[session-end] Agent session ended for JalRakshak project.',concepts:'session-end,jalrakshak',files:[]})}).catch(()=>{});\"",
+      "description": "Log a session-end observation to agentmemory."
+    }
+  ]
+}

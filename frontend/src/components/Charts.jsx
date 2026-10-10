@@ -1,23 +1,81 @@
+import { useState } from 'react'
 import ReactECharts from 'echarts-for-react'
+import { cn } from '../lib/utils'
 export { CityWaterMap as WaterBalanceChart } from './CityWaterMap'
 
 // ─── Shared ECharts styling ─────────────────────────────────────────────────
 const GRID = { left: 16, right: 16, top: 28, bottom: 16, containLabel: true }
 
 /**
- * RiskDistributionChart — donut chart of shortage risk tiers
+ * RiskDistributionChart — evilcharts-style interactive donut chart of shortage risk tiers
  */
-export function RiskDistributionChart({ cities, height = 280 }) {
+export function RiskDistributionChart({ cities, height = 320 }) {
+  const [selected, setSelected] = useState(null)
+
   if (!cities || cities.length === 0) return null
 
-  const counts = { Low: 0, Medium: 0, High: 0, Critical: 0 }
-  cities.forEach((c) => { if (counts[c.shortage_risk_category] !== undefined) counts[c.shortage_risk_category]++ })
+  const counts = { Critical: 0, High: 0, Medium: 0, Low: 0 }
+  cities.forEach((c) => {
+    if (counts[c.shortage_risk_category] !== undefined) {
+      counts[c.shortage_risk_category]++
+    }
+  })
 
-  const COLORS = { Low: '#22c55e', Medium: '#f59e0b', High: '#f97316', Critical: '#ef4444' }
-  const data = Object.entries(counts).map(([name, value]) => ({
-    name, value,
-    itemStyle: { color: COLORS[name] },
-  }))
+  const TOTAL = cities.length
+
+  const SERIES = [
+    {
+      key: 'Critical',
+      label: 'Critical',
+      value: counts.Critical,
+      share: Math.round((counts.Critical / (TOTAL || 1)) * 100),
+      color: '#fb7185',
+      swatch: 'bg-[#fb7185]',
+    },
+    {
+      key: 'High',
+      label: 'High',
+      value: counts.High,
+      share: Math.round((counts.High / (TOTAL || 1)) * 100),
+      color: '#fb923c',
+      swatch: 'bg-[#fb923c]',
+    },
+    {
+      key: 'Medium',
+      label: 'Medium',
+      value: counts.Medium,
+      share: Math.round((counts.Medium / (TOTAL || 1)) * 100),
+      color: '#fbbf24',
+      swatch: 'bg-[#fbbf24]',
+    },
+    {
+      key: 'Low',
+      label: 'Low',
+      value: counts.Low,
+      share: Math.round((counts.Low / (TOTAL || 1)) * 100),
+      color: '#2dd4bf',
+      swatch: 'bg-[#2dd4bf]',
+    },
+  ]
+
+  const activeSeries = SERIES.find((s) => s.key === selected)
+  const displayValue = activeSeries ? activeSeries.value : TOTAL
+  const displayLabel = activeSeries
+    ? `${activeSeries.label} (${activeSeries.share}%)`
+    : 'Cities Monitored'
+
+  const chartData = SERIES.map(({ key, label, value, color }) => {
+    const isMuted = selected !== null && selected !== key
+    return {
+      name: label,
+      value,
+      itemStyle: {
+        color,
+        opacity: isMuted ? 0.25 : 1,
+        borderRadius: 4,
+      },
+    }
+  })
 
   const option = {
     backgroundColor: 'transparent',
@@ -26,35 +84,111 @@ export function RiskDistributionChart({ cities, height = 280 }) {
       backgroundColor: 'var(--card)',
       borderColor: 'var(--border)',
       borderWidth: 1,
-      textStyle: { color: 'var(--card-foreground)', fontSize: 12, fontFamily: 'Inter' },
-      formatter: '{b}: {c} cities ({d}%)',
+      padding: [8, 12],
+      textStyle: {
+        color: 'var(--card-foreground)',
+        fontSize: 11,
+        fontFamily: 'Plus Jakarta Sans',
+      },
+      formatter: (params) => {
+        return `<div style="display:flex; align-items:center; gap:6px; font-family:'Plus Jakarta Sans'; font-size:11px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:2px; background:${params.color};"></span>
+          <strong>${params.name}:</strong>
+          <span style="font-family:'JetBrains Mono'; font-weight:600;">${params.value} cities</span>
+          <span style="color:var(--muted-foreground);">(${params.percent}%)</span>
+        </div>`
+      },
     },
     legend: { show: false },
-    series: [{
-      type: 'pie',
-      radius: ['52%', '78%'],
-      center: ['50%', '50%'],
-      data,
-      label: {
-        show: true,
-        formatter: '{b}\n{c}',
-        color: 'var(--muted-foreground)',
-        fontSize: 11,
-        fontFamily: 'Inter',
+    series: [
+      {
+        type: 'pie',
+        radius: ['56%', '88%'],
+        center: ['50%', '50%'],
+        padAngle: 3,
+        startAngle: 90,
+        endAngle: -270,
+        data: chartData,
+        label: { show: false },
+        emphasis: {
+          scale: true,
+          scaleSize: 5,
+          itemStyle: {
+            shadowBlur: 14,
+            shadowColor: 'rgba(0, 0, 0, 0.35)',
+          },
+        },
       },
-      labelLine: { lineStyle: { color: 'var(--border)' } },
-      emphasis: {
-        itemStyle: { shadowBlur: 15, shadowColor: 'rgba(11, 114, 249, 0.3)' },
-      },
-    }],
+    ],
+  }
+
+  const onEvents = {
+    click: (params) => {
+      const match = SERIES.find((s) => s.label === params.name)
+      if (match) {
+        setSelected((prev) => (prev === match.key ? null : match.key))
+      }
+    },
   }
 
   return (
-    <div className="chart-container">
-      <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wider">
-        Risk Tier Distribution
-      </h3>
-      <ReactECharts option={option} style={{ height }} notMerge />
+    <div className="chart-container flex flex-col justify-between h-full">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-wider block">
+          Risk Category Distribution
+        </span>
+        {selected && (
+          <button
+            type="button"
+            onClick={() => setSelected(null)}
+            className="text-[10px] font-sans font-medium text-muted-foreground hover:text-foreground underline transition-colors cursor-pointer"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+
+      <div className="relative min-h-[195px] w-full flex-1 flex items-center justify-center">
+        <ReactECharts
+          option={option}
+          style={{ height: '100%', minHeight: 195, width: '100%' }}
+          onEvents={onEvents}
+          notMerge
+        />
+
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+          <span
+            className="text-2xl sm:text-3xl font-bold font-mono tracking-tight tabular-nums transition-colors"
+            style={{ color: activeSeries ? activeSeries.color : 'var(--foreground)' }}
+          >
+            {displayValue}
+          </span>
+          <span className="text-muted-foreground text-[10px] sm:text-xs font-sans uppercase tracking-wider">
+            {displayLabel}
+          </span>
+        </div>
+      </div>
+
+      <div className="border-border mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t pt-3">
+        {SERIES.map(({ key, label, value, share, swatch }) => (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={selected === key}
+            onClick={() => setSelected((prev) => (prev === key ? null : key))}
+            className={cn(
+              "flex cursor-pointer items-center gap-2 text-left text-xs transition-opacity p-1 rounded hover:bg-muted/60",
+              selected !== null && selected !== key && "opacity-40",
+              selected === key && "bg-muted font-medium"
+            )}
+          >
+            <span className={cn("size-3 shrink-0 rounded-[3px]", swatch)} />
+            <span className="text-foreground font-medium">{label}</span>
+            <span className="text-foreground font-mono tabular-nums font-semibold ml-auto">{value}</span>
+            <span className="text-muted-foreground/70 font-mono tabular-nums text-[11px]">({share}%)</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -82,9 +216,9 @@ export function GroundwaterRadar({ city, height = 280 }) {
       ],
       shape: 'polygon',
       splitNumber: 4,
-      nameTextStyle: { color: 'var(--muted-foreground)', fontSize: 11, fontFamily: 'Inter' },
+      nameTextStyle: { color: 'var(--muted-foreground)', fontSize: 10, fontFamily: 'Plus Jakarta Sans' },
       splitLine: { lineStyle: { color: 'var(--border)' } },
-      splitArea: { areaStyle: { color: ['rgba(11, 114, 249, 0.03)', 'rgba(4, 195, 220, 0.03)'] } },
+      splitArea: { areaStyle: { color: ['rgba(45, 212, 191, 0.04)', 'rgba(56, 189, 248, 0.02)'] } },
       axisLine: { lineStyle: { color: 'var(--border)' } },
     },
     series: [{
@@ -98,19 +232,19 @@ export function GroundwaterRadar({ city, height = 280 }) {
           Math.min(city.nrw_loss_percentage, 40),
           city.groundwater_stress_index,
         ],
-        lineStyle: { color: 'rgb(11, 114, 249)', width: 2 },
-        itemStyle: { color: 'rgb(11, 114, 249)' },
-        areaStyle: { color: 'rgba(11, 114, 249, 0.15)' },
+        lineStyle: { color: '#2dd4bf', width: 2 },
+        itemStyle: { color: '#2dd4bf' },
+        areaStyle: { color: 'rgba(45, 212, 191, 0.18)' },
       }],
     }],
   }
 
   return (
     <div className="chart-container">
-      <h3 className="text-sm font-semibold text-foreground mb-1 uppercase tracking-wider">
+      <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-wider block mb-0.5">
         Water Stress Radar
-      </h3>
-      <p className="text-xs text-muted-foreground mb-2 font-medium">{city.city}</p>
+      </span>
+      <p className="text-xs font-sans text-muted-foreground mb-2">{city.city}</p>
       <ReactECharts option={option} style={{ height }} notMerge />
     </div>
   )
@@ -204,15 +338,15 @@ export function SimulationBarChart({ baseline, result, height = 120 }) {
         type: 'bar',
         stack: 'total',
         data: [result.improved_effective_supply_mld, baseline.current_supply_mld],
-        itemStyle: { color: 'rgb(11, 114, 249)', borderRadius: [4, 0, 0, 4] },
-        label: { show: true, position: 'inside', color: '#fff', fontSize: 10, fontFamily: 'JetBrains Mono', formatter: '{c} MLD' },
+        itemStyle: { color: 'var(--primary)', borderRadius: [3, 0, 0, 3] },
+        label: { show: true, position: 'inside', color: 'var(--primary-foreground)', fontSize: 10, fontFamily: 'JetBrains Mono', formatter: '{c} MLD' },
       },
       {
         name: 'Shortage',
         type: 'bar',
         stack: 'total',
         data: [result.new_shortage_mld, baseline.initial_shortage_mld],
-        itemStyle: { color: 'rgba(239, 68, 68, 0.75)', borderRadius: [0, 4, 4, 0] },
+        itemStyle: { color: 'rgba(251, 113, 133, 0.75)', borderRadius: [0, 3, 3, 0] },
         label: { show: true, position: 'inside', color: '#fff', fontSize: 10, fontFamily: 'JetBrains Mono', formatter: '{c} MLD' },
       },
     ],

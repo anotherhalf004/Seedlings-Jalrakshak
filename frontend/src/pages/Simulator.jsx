@@ -6,9 +6,9 @@ import { simulate } from '../api'
 
 function RiskTransitionArrow({ from, to }) {
   return (
-    <div className="flex items-center gap-3 justify-center py-4 bg-muted/40 rounded-xl border border-border my-3">
+    <div className="flex items-center gap-2 justify-center py-2.5 bg-muted rounded border border-border my-2.5">
       <RiskBadge tier={from} />
-      <ArrowRight size={18} className="text-muted-foreground" />
+      <ArrowRight size={14} className="text-muted-foreground" />
       <RiskBadge tier={to} />
     </div>
   )
@@ -47,34 +47,34 @@ export default function Simulator({ cities }) {
   const sr = result?.simulation_results
 
   return (
-    <div className="grid lg:grid-cols-5 gap-6">
+    <div className="grid lg:grid-cols-5 gap-4">
       {/* Control panel */}
       <div className="lg:col-span-2">
-        <div className="glass-panel p-6">
-          <div className="flex items-center gap-2.5 mb-6 pb-4 border-b border-border">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500">
-              <FlaskConical size={18} />
+        <div className="glass-panel p-4">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+            <div className="w-7 h-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <FlaskConical size={14} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-foreground font-sans">What-If Simulator</h2>
-              <p className="text-xs text-muted-foreground">NRW Leakage Reduction Scenarios</p>
+              <h2 className="text-sm font-display font-bold text-foreground">NRW Scenario Simulator</h2>
+              <p className="text-xs font-sans text-muted-foreground">Distribution loss mitigation modeling</p>
             </div>
           </div>
 
-          <form onSubmit={handleSim} className="space-y-6">
+          <form onSubmit={handleSim} className="space-y-4">
             {/* City picker */}
             <div>
-              <label htmlFor="sim-city" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
-                Target City
+              <label htmlFor="sim-city" className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">
+                Target Urban Center
               </label>
               <input
                 id="sim-city"
                 type="text"
                 list="sim-city-list"
-                placeholder="Select a city"
+                placeholder="Select urban center…"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-4 py-2.5 bg-muted/50 border border-input rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+                className="w-full px-3 py-1.5 bg-muted border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 required
               />
               <datalist id="sim-city-list">
@@ -84,10 +84,10 @@ export default function Simulator({ cities }) {
 
             {/* Current NRW */}
             <div>
-              <label htmlFor="current-nrw" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex justify-between">
-                <span>Current NRW Loss</span>
-                <span className="text-amber-500 font-mono font-bold">{currentNRW}%</span>
-              </label>
+              <div className="flex justify-between items-center text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <span>Baseline NRW Loss</span>
+                <span className="text-amber-500 font-mono font-bold tabular-nums">{currentNRW}%</span>
+              </div>
               <input
                 id="current-nrw"
                 type="range" min={1} max={60} step={0.5}
@@ -95,17 +95,17 @@ export default function Simulator({ cities }) {
                 onChange={(e) => { setCurrentNRW(+e.target.value); if (+e.target.value <= targetNRW) setTargetNRW(+e.target.value - 1) }}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1 font-mono">
+              <div className="flex justify-between text-[10px] text-muted-foreground font-mono tabular-nums mt-0.5">
                 <span>1%</span><span>60%</span>
               </div>
             </div>
 
             {/* Target NRW */}
             <div>
-              <label htmlFor="target-nrw" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex justify-between">
-                <span>Target NRW Goal</span>
-                <span className="text-emerald-500 font-mono font-bold">{targetNRW}%</span>
-              </label>
+              <div className="flex justify-between items-center text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <span>Target NRW Loss</span>
+                <span className="text-emerald-500 font-mono font-bold tabular-nums">{targetNRW}%</span>
+              </div>
               <input
                 id="target-nrw"
                 type="range" min={0} max={Math.max(currentNRW - 1, 1)} step={0.5}
@@ -113,23 +113,23 @@ export default function Simulator({ cities }) {
                 onChange={(e) => setTargetNRW(+e.target.value)}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1 font-mono">
+              <div className="flex justify-between text-[10px] text-muted-foreground font-mono tabular-nums mt-0.5">
                 <span>0%</span><span>{Math.max(currentNRW - 1, 1)}%</span>
               </div>
             </div>
 
-            {/* Reduction preview */}
-            <div className="glass-panel p-4 text-center border-purple-500/20 bg-purple-500/5">
-              <p className="text-xs text-muted-foreground font-medium mb-1">Target Reduction</p>
-              <p className="text-3xl font-extrabold font-mono text-purple-600 dark:text-purple-400">
-                {(currentNRW - targetNRW).toFixed(1)}%
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">water loss recovered</p>
+            {/* Reduction preview badge */}
+            <div className="p-3 rounded border border-primary/20 bg-primary/5 text-center">
+              <span className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider block">Target Loss Reduction</span>
+              <span className="text-xl font-bold font-mono text-primary tabular-nums">
+                -{(currentNRW - targetNRW).toFixed(1)}%
+              </span>
+              <span className="text-xs font-sans text-muted-foreground block mt-0.5">recoverable distribution loss</span>
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
-                <AlertCircle size={15} /> {error}
+              <div className="flex items-center gap-2 p-2.5 rounded bg-destructive/10 border border-destructive/20 text-destructive text-xs font-sans font-medium">
+                <AlertCircle size={14} /> {error}
               </div>
             )}
 
@@ -137,105 +137,104 @@ export default function Simulator({ cities }) {
               id="simulate-submit"
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-purple-600 dark:bg-purple-500 text-white shadow-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full py-2.5 rounded font-sans font-semibold text-xs tracking-wider uppercase flex items-center justify-center gap-2 bg-primary text-primary-foreground shadow-xs hover:opacity-95 active:scale-[0.99] transition-all disabled:opacity-50"
             >
-              {loading ? <><Loader2 size={16} className="animate-spin" /> Simulating Scenario…</> : <><TrendingUp size={16} /> Run Simulation</>}
+              {loading ? <><Loader2 size={14} className="animate-spin" /> SIMULATING…</> : <><TrendingUp size={14} /> RUN SCENARIO SIMULATION</>}
             </button>
           </form>
         </div>
       </div>
 
       {/* Results panel */}
-      <div className="lg:col-span-3 space-y-5">
+      <div className="lg:col-span-3 space-y-4">
         {!result && !loading && (
-          <div className="glass-panel p-12 flex flex-col items-center justify-center text-center min-h-[440px]">
-            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4 text-purple-500 animate-float">
-              <FlaskConical size={28} />
+          <div className="glass-panel p-10 flex flex-col items-center justify-center text-center min-h-[420px]">
+            <div className="w-12 h-12 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center mb-3 text-primary">
+              <FlaskConical size={22} />
             </div>
-            <p className="text-foreground font-semibold text-base">Configure NRW loss reduction targets</p>
-            <p className="text-muted-foreground text-sm mt-1 max-w-sm">Simulate how reducing non-revenue water loss increases effective municipal supply and mitigates risk.</p>
+            <p className="text-foreground font-display font-bold text-sm">Awaiting Scenario Configuration</p>
+            <p className="text-muted-foreground text-xs sm:text-[13px] font-sans mt-1 max-w-sm leading-relaxed">Adjust baseline and target NRW leakage parameters on the left to project net municipal water recovery and risk tier reduction.</p>
           </div>
         )}
 
         {result && bl && sr && (
           <>
             {/* Impact summary */}
-            <div className="glass-panel p-6 border-purple-500/20 bg-purple-500/5">
-              <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-2">Scenario Impact Summary</p>
-              <p className="text-foreground text-sm leading-relaxed">{result.impact_summary}</p>
+            <div className="glass-panel p-4 border-primary/25 bg-primary/5">
+              <span className="text-[11px] font-sans font-semibold text-primary uppercase tracking-wider block mb-1">Scenario Diagnostics</span>
+              <p className="text-xs text-foreground leading-relaxed font-sans">{result.impact_summary}</p>
               <RiskTransitionArrow from={bl.initial_risk_tier} to={sr.new_risk_tier} />
             </div>
 
             {/* Before / After cards */}
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-2 gap-3">
               {/* Before */}
-              <div className="glass-panel p-5 border-border">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Baseline (Current)</p>
-                <div className="space-y-2.5 text-xs">
+              <div className="glass-panel p-3.5 border-border">
+                <span className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Baseline Status</span>
+                <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Effective Supply</span>
-                    <span className="font-semibold font-mono text-foreground">{bl.current_supply_mld} MLD</span>
+                    <span className="font-sans text-muted-foreground">Supply</span>
+                    <span className="font-mono tabular-nums font-semibold text-foreground">{bl.current_supply_mld} MLD</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">NRW Loss</span>
-                    <span className="font-semibold font-mono text-amber-500">{bl.current_nrw_loss_pct}%</span>
+                    <span className="font-sans text-muted-foreground">NRW Loss</span>
+                    <span className="font-mono tabular-nums font-semibold text-amber-500">{bl.current_nrw_loss_pct}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shortage Volume</span>
-                    <span className="font-semibold font-mono text-destructive">{bl.initial_shortage_mld} MLD</span>
+                    <span className="font-sans text-muted-foreground">Deficit</span>
+                    <span className="font-mono tabular-nums font-semibold text-destructive">{bl.initial_shortage_mld} MLD</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shortage %</span>
-                    <span className="font-semibold font-mono text-destructive">{bl.initial_shortage_pct}%</span>
+                    <span className="font-sans text-muted-foreground">Deficit %</span>
+                    <span className="font-mono tabular-nums font-semibold text-destructive">{bl.initial_shortage_pct}%</span>
                   </div>
-                  <div className="pt-2 border-t border-border/50"><RiskBadge tier={bl.initial_risk_tier} /></div>
+                  <div className="pt-1.5 border-t border-border"><RiskBadge tier={bl.initial_risk_tier} /></div>
                 </div>
               </div>
 
               {/* After */}
-              <div className="glass-panel p-5 border-emerald-500/30 bg-emerald-500/5">
-                <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-3">Simulated Outcome</p>
-                <div className="space-y-2.5 text-xs">
+              <div className="glass-panel p-3.5 border-emerald-500/30 bg-emerald-500/5">
+                <span className="text-[11px] font-sans font-semibold text-emerald-500 uppercase tracking-wider block mb-2">Simulated Mitigation</span>
+                <div className="space-y-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Effective Supply</span>
-                    <span className="font-semibold font-mono text-emerald-600 dark:text-emerald-400">{sr.improved_effective_supply_mld} MLD</span>
+                    <span className="font-sans text-muted-foreground">Supply</span>
+                    <span className="font-mono tabular-nums font-semibold text-emerald-500">{sr.improved_effective_supply_mld} MLD</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Target NRW</span>
-                    <span className="font-semibold font-mono text-emerald-600 dark:text-emerald-400">{sr.target_nrw_loss_pct}%</span>
+                    <span className="font-sans text-muted-foreground">Target NRW</span>
+                    <span className="font-mono tabular-nums font-semibold text-emerald-500">{sr.target_nrw_loss_pct}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shortage Volume</span>
-                    <span className="font-semibold font-mono text-emerald-600 dark:text-emerald-400">{sr.new_shortage_mld} MLD</span>
+                    <span className="font-sans text-muted-foreground">Deficit</span>
+                    <span className="font-mono tabular-nums font-semibold text-emerald-500">{sr.new_shortage_mld} MLD</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shortage %</span>
-                    <span className="font-semibold font-mono text-emerald-600 dark:text-emerald-400">{sr.new_shortage_pct}%</span>
+                    <span className="font-sans text-muted-foreground">Deficit %</span>
+                    <span className="font-mono tabular-nums font-semibold text-emerald-500">{sr.new_shortage_pct}%</span>
                   </div>
-                  <div className="pt-2 border-t border-border/50"><RiskBadge tier={sr.new_risk_tier} /></div>
+                  <div className="pt-1.5 border-t border-border"><RiskBadge tier={sr.new_risk_tier} /></div>
                 </div>
               </div>
             </div>
 
             {/* Water saved highlight */}
-            <div className="glass-panel p-6 text-center border-primary/20 bg-primary/5">
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Water Recovered</p>
-              <p className="text-4xl sm:text-5xl font-extrabold font-mono text-primary tabular-nums">
-                {sr.water_saved_mld}
-              </p>
-              <p className="text-foreground text-sm font-medium mt-1">Million Litres / Day Recovered</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                Shortage reduced by {sr.shortage_reduction_pct_points} percentage points
-              </p>
+            <div className="glass-panel p-4 text-center border-primary/20 bg-primary/5">
+              <span className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">Net Water Volume Recovered</span>
+              <span className="text-3xl font-bold font-mono text-primary tabular-nums block">
+                +{sr.water_saved_mld} MLD
+              </span>
+              <span className="text-xs font-sans text-muted-foreground mt-1 block">
+                Shortage reduced by <span className="font-mono tabular-nums font-medium text-foreground">{sr.shortage_reduction_pct_points}</span> percentage points
+              </span>
             </div>
 
             {/* Bar comparison chart */}
             <div className="chart-container">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Supply vs Shortage — Before & After Comparison</p>
+              <span className="text-[11px] font-sans font-semibold text-muted-foreground uppercase tracking-wider block mb-2">Effective Supply &amp; Shortage Comparison</span>
               <SimulationBarChart baseline={bl} result={sr} height={110} />
             </div>
 
-            <p className="text-xs text-muted-foreground text-center">{result.simulation_disclaimer}</p>
+            <p className="text-xs font-sans text-muted-foreground text-center">{result.simulation_disclaimer}</p>
           </>
         )}
       </div>
