@@ -9,8 +9,17 @@ import os
 import sys
 import json
 import argparse
+import hashlib
+import logging
 import numpy as np
 import pandas as pd
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 try:
     import joblib
@@ -19,6 +28,50 @@ except ImportError:
     HAS_JOBLIB = False
 
 from shortage_engine import compute_shortage, load_shortage_config
+
+def compute_file_hash(filepath: str) -> str:
+    """Compute SHA256 hash of a file."""
+    sha256_hash = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
+
+def load_trusted_model(model_path: str, expected_hash: str = None):
+    """
+    Load a model with optional integrity verification.
+    
+    Args:
+        model_path: Path to the model file
+        expected_hash: Expected SHA256 hash (optional, from env var)
+    
+    Returns:
+        Loaded model object
+    
+    Raises:
+        ValueError: If hash verification fails
+    """
+    if not os.path.exists(model_path):
+        logger.warning(f"Model file not found: {model_path}")
+        return None
+    
+    # Verify hash if expected hash is provided
+    if expected_hash:
+        actual_hash = compute_file_hash(model_path)
+        if actual_hash != expected_hash:
+            error_msg = f"Model integrity check failed for {model_path}. Expected: {expected_hash}, Got: {actual_hash}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
+        logger.info(f"Model integrity verified: {model_path}")
+    
+    # Load the model
+    try:
+        model = joblib.load(model_path)
+        logger.info(f"Successfully loaded model: {model_path}")
+        return model
+    except Exception as e:
+        logger.error(f"Failed to load model {model_path}: {str(e)}")
+        raise
 
 def predict_water_crisis(
     city: str,
@@ -73,49 +126,54 @@ def predict_water_crisis(
     demand_model_path = os.path.join(proj_root, "models", "demand_model.joblib")
     supply_model_path = os.path.join(proj_root, "models", "supply_model.joblib")
     
+    # Get expected hashes from environment variables (optional)
+    demand_model_hash = os.getenv("DEMAND_MODEL_HASH")
+    supply_model_hash = os.getenv("SUPPLY_MODEL_HASH")
+    
     if HAS_JOBLIB and os.path.exists(demand_model_path) and os.path.exists(supply_model_path):
         try:
-            d_pkg = joblib.load(demand_model_path)
-            s_pkg = joblib.load(supply_model_path)
+            d_pkg = load_trusted_model(demand_model_path, demand_model_hash)
+            s_pkg = load_trusted_model(supply_model_path, supply_model_hash)
             
-            d_features = d_pkg.get("features", ["population_estimated", "state_tap_water_coverage_pct", "monitoring_wells_count"])
-            X_d = pd.DataFrame([{
-                "population_estimated": population,
-                "state_tap_water_coverage_pct": state_tap_water_coverage_pct,
-                "monitoring_wells_count": monitoring_wells_count
-            }])[d_features]
-            
-            s_features = s_pkg.get("features", [
-                "population_estimated", "gw_fall_pct", "gw_fall_gt_4m_pct", "gw_rise_pct",
-                "state_tap_water_coverage_pct", "rainfall_period_actual_mm", "rainfall_period_dep_pct",
-                "groundwater_stress_index"
-            ])
-            X_s = pd.DataFrame([{
-                "population_estimated": population,
-                "gw_fall_pct": gw_fall_pct,
-                "gw_fall_gt_4m_pct": gw_fall_gt_4m_pct,
-                "gw_rise_pct": gw_rise_pct,
-                "state_tap_water_coverage_pct": state_tap_water_coverage_pct,
-                "rainfall_period_actual_mm": rainfall_period_actual_mm,
-                "rainfall_period_dep_pct": rainfall_period_dep_pct,
-                "groundwater_stress_index": gsvi_score
-            }])[s_features]
-            
-            # Predict Demand MLD using trained Ridge regression
-            base_demand_mld = round(float(d_pkg["model"].predict(X_d)[0]), 2)
-            
-            # Predict Supply Ratio using trained Gradient Boosting regression
-            target_type = s_pkg.get("target", s_pkg.get("model_type", "supply_ratio"))
-            if target_type in ["supply_ratio", "ratio"]:
-                raw_ratio = float(s_pkg["model"].predict(X_s)[0])
-                supply_ratio = round(max(0.10, min(1.0, raw_ratio)), 4)
-                # Compute supply MLD = demand * ratio
-                estimated_supply_mld = round(base_demand_mld * supply_ratio, 2)
-            else:
-                estimated_supply_mld = round(float(s_pkg["model"].predict(X_s)[0]), 2)
-                supply_ratio = round((estimated_supply_mld / base_demand_mld), 4) if base_demand_mld > 0 else 1.0
+            if d_pkg and s_pkg:
+                d_features = d_pkg.get("features", ["population_estimated", "state_tap_water_coverage_pct", "monitoring_wells_count"])
+                X_d = pd.DataFrame([{
+                    "population_estimated": population,
+                    "state_tap_water_coverage_pct": state_tap_water_coverage_pct,
+                    "monitoring_wells_count": monitoring_wells_count
+                }])[d_features]
+                
+                s_features = s_pkg.get("features", [
+                    "population_estimated", "gw_fall_pct", "gw_fall_gt_4m_pct", "gw_rise_pct",
+                    "state_tap_water_coverage_pct", "rainfall_period_actual_mm", "rainfall_period_dep_pct",
+                    "groundwater_stress_index"
+                ])
+                X_s = pd.DataFrame([{
+                    "population_estimated": population,
+                    "gw_fall_pct": gw_fall_pct,
+                    "gw_fall_gt_4m_pct": gw_fall_gt_4m_pct,
+                    "gw_rise_pct": gw_rise_pct,
+                    "state_tap_water_coverage_pct": state_tap_water_coverage_pct,
+                    "rainfall_period_actual_mm": rainfall_period_actual_mm,
+                    "rainfall_period_dep_pct": rainfall_period_dep_pct,
+                    "groundwater_stress_index": gsvi_score
+                }])[s_features]
+                
+                # Predict Demand MLD using trained Ridge regression
+                base_demand_mld = round(float(d_pkg["model"].predict(X_d)[0]), 2)
+                
+                # Predict Supply Ratio using trained Gradient Boosting regression
+                target_type = s_pkg.get("target", s_pkg.get("model_type", "supply_ratio"))
+                if target_type in ["supply_ratio", "ratio"]:
+                    raw_ratio = float(s_pkg["model"].predict(X_s)[0])
+                    supply_ratio = round(max(0.10, min(1.0, raw_ratio)), 4)
+                    # Compute supply MLD = demand * ratio
+                    estimated_supply_mld = round(base_demand_mld * supply_ratio, 2)
+                else:
+                    estimated_supply_mld = round(float(s_pkg["model"].predict(X_s)[0]), 2)
+                    supply_ratio = round((estimated_supply_mld / base_demand_mld), 4) if base_demand_mld > 0 else 1.0
         except Exception as e:
-            pass # Gracefully fall back to engineering formulas
+            logger.error(f"Model loading/prediction failed, falling back to engineering formulas: {str(e)}", exc_info=True)
             
     # 4. Shortage Calculation
     config = load_shortage_config()

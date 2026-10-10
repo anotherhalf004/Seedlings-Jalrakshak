@@ -10,12 +10,29 @@ Production-grade REST API powering the JalRakshak National Dashboard:
 
 import os
 import sys
+import logging
+import time
+from collections import defaultdict
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel, Field, field_validator
 import pandas as pd
 import numpy as np
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Add ml folder to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ml")))
@@ -28,17 +45,102 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for React Frontend
+# Configure CORS with environment variable fallback
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,  # Changed to False for security
+    allow_methods=["GET", "POST"],  # Restrict to required methods
+    allow_headers=["Content-Type"],  # Restrict to required headers
 )
 
-# Load master dataset for pre-computed city queries
-MASTER_DATA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "final", "jalrakshak_master.csv"))
+# Trusted Host middleware for production
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+if os.getenv("ENVIRONMENT") == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=ALLOWED_HOSTS
+    )
+
+# Security headers middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    return response
+
+# HTTPS enforcement for production
+@app.middleware("http")
+async def redirect_to_https(request: Request, call_next):
+    if os.getenv("ENVIRONMENT") == "production":
+        if request.url.scheme == "http" and not ("localhost" in request.url.hostname or "127.0.0.1" in request.url.hostname):
+            return RedirectResponse(url=str(request.url).replace("http://", "https://"), status_code=301)
+    return await call_next(request)
+
+# Simple in-memory rate limiter
+class RateLimiter:
+    def __init__(self):
+        self.requests = defaultdict(list)
+        self.max_requests = int(os.getenv("RATE_LIMIT_MAX", "100"))
+        self.window_seconds = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
+
+    def is_allowed(self, client_ip: str) -> bool:
+        now = time.time()
+        # Remove old requests outside the window
+        self.requests[client_ip] = [req_time for req_time in self.requests[client_ip] if now - req_time < self.window_seconds]
+        
+        if len(self.requests[client_ip]) >= self.max_requests:
+            return False
+        
+        self.requests[client_ip].append(now)
+        return True
+
+rate_limiter = RateLimiter()
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    # Skip rate limiting for health check in development
+    if os.getenv("ENVIRONMENT") != "production" and request.url.path == "/api/v1/health":
+        return await call_next(request)
+    
+    client_ip = request.client.host if request.client else "unknown"
+    if not rate_limiter.is_allowed(client_ip):
+        logger.warning(f"Rate limit exceeded for IP: {client_ip}")
+        raise HTTPException(status_code=429, detail="Too many requests")
+    
+    return await call_next(request)
+
+# API Key Authentication (optional, enabled via env var)
+security = HTTPBearer(auto_error=False)
+
+async def verify_api_key(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    """Verify API key if API_KEY environment variable is set."""
+    api_key = os.getenv("API_KEY")
+    if not api_key:
+        # No API key required
+        return None
+    
+    if not credentials or credentials.credentials != api_key:
+        logger.warning(f"Invalid API key attempt from IP: {credentials}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key"
+        )
+    
+    return credentials.credentials
+
+# Load master dataset for pre-computed city queries (use env var with fallback)
+MASTER_DATA_PATH = os.getenv(
+    "MASTER_DATA_PATH",
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "final", "jalrakshak_master.csv"))
+)
 
 def get_master_df():
     if os.path.exists(MASTER_DATA_PATH):
@@ -87,23 +189,52 @@ def find_city_in_df(df: pd.DataFrame, city_name: str):
 # ----------------- PYDANTIC SCHEMAS -----------------
 
 class PredictionRequest(BaseModel):
-    city: str = Field(..., example="Bengaluru")
-    population: Optional[float] = Field(None, example=8443675)
-    gw_fall_pct: Optional[float] = Field(50.0, example=91.67, description="% of wells showing water level drop")
-    gw_fall_gt_4m_pct: Optional[float] = Field(0.0, example=20.83, description="% of wells with >4m drop")
-    gw_rise_pct: Optional[float] = Field(0.0, example=8.33, description="% of wells rising")
-    state_tap_water_coverage_pct: Optional[float] = Field(85.0, example=89.70, description="Tap connection coverage %")
-    rainfall_period_actual_mm: Optional[float] = Field(20.0, example=43.2, description="Recorded rainfall mm")
-    rainfall_period_dep_pct: Optional[float] = Field(-15.0, example=-11.0, description="Rainfall departure %")
-    monitoring_wells_count: Optional[int] = Field(10, example=24)
-    forecast_period: Optional[str] = Field("Upcoming Month", example="Upcoming Month")
+    city: str = Field(..., min_length=1, max_length=100, description="City name")
+    population: Optional[float] = Field(None, ge=0, description="Population count")
+    gw_fall_pct: Optional[float] = Field(50.0, ge=0, le=100, description="% of wells showing water level drop")
+    gw_fall_gt_4m_pct: Optional[float] = Field(0.0, ge=0, le=100, description="% of wells with >4m drop")
+    gw_rise_pct: Optional[float] = Field(0.0, ge=0, le=100, description="% of wells rising")
+    state_tap_water_coverage_pct: Optional[float] = Field(85.0, ge=0, le=100, description="Tap connection coverage %")
+    rainfall_period_actual_mm: Optional[float] = Field(20.0, ge=0, description="Recorded rainfall mm")
+    rainfall_period_dep_pct: Optional[float] = Field(-15.0, ge=-100, le=200, description="Rainfall departure %")
+    monitoring_wells_count: Optional[int] = Field(10, ge=1, le=1000, description="Number of monitoring wells")
+    forecast_period: Optional[str] = Field("Upcoming Month", description="Forecast period")
+
+    @field_validator('city')
+    @classmethod
+    def validate_city_name(cls, v: str) -> str:
+        """Validate city name contains only allowed characters."""
+        if not v or not v.strip():
+            raise ValueError("City name cannot be empty")
+        # Allow letters, spaces, hyphens, and parentheses
+        if not all(c.isalnum() or c in ' -()' for c in v):
+            raise ValueError("City name contains invalid characters")
+        return v.strip()
 
 class SimulatorRequest(BaseModel):
-    city: str = Field(..., example="Bengaluru")
-    current_nrw_loss_pct: float = Field(20.0, example=20.0, description="Current Non-Revenue Water loss percentage")
-    target_nrw_loss_pct: float = Field(10.0, example=10.0, description="Target reduced loss percentage")
-    demand_mld: Optional[float] = Field(None, example=1310.88)
-    supply_mld: Optional[float] = Field(None, example=881.52)
+    city: str = Field(..., min_length=1, max_length=100, description="City name")
+    current_nrw_loss_pct: float = Field(20.0, ge=0, le=100, description="Current Non-Revenue Water loss percentage")
+    target_nrw_loss_pct: float = Field(10.0, ge=0, le=100, description="Target reduced loss percentage")
+    demand_mld: Optional[float] = Field(None, ge=0, description="Demand in MLD")
+    supply_mld: Optional[float] = Field(None, ge=0, description="Supply in MLD")
+
+    @field_validator('city')
+    @classmethod
+    def validate_city_name(cls, v: str) -> str:
+        """Validate city name contains only allowed characters."""
+        if not v or not v.strip():
+            raise ValueError("City name cannot be empty")
+        if not all(c.isalnum() or c in ' -()' for c in v):
+            raise ValueError("City name contains invalid characters")
+        return v.strip()
+
+    @field_validator('target_nrw_loss_pct')
+    @classmethod
+    def validate_target_less_than_current(cls, v: float, info) -> float:
+        """Ensure target NRW is not greater than current NRW."""
+        if 'current_nrw_loss_pct' in info.data and v > info.data['current_nrw_loss_pct']:
+            raise ValueError("Target NRW loss percentage must be less than or equal to current NRW loss percentage")
+        return v
 
 # ----------------- ENDPOINTS -----------------
 
@@ -131,7 +262,7 @@ def list_cities():
     }
 
 @app.post("/api/v1/predict")
-def predict(request: PredictionRequest):
+def predict(request: PredictionRequest, api_key: Optional[str] = Depends(verify_api_key)):
     """Generates demand, supply, shortage risk, and loss diagnostics for any city."""
     df = get_master_df()
     
@@ -170,7 +301,7 @@ def predict(request: PredictionRequest):
     return pred_res
 
 @app.post("/api/v1/simulate")
-def what_if_simulator(req: SimulatorRequest):
+def what_if_simulator(req: SimulatorRequest, api_key: Optional[str] = Depends(verify_api_key)):
     """
     Simulates water savings and crisis risk downgrade when reducing water losses (Phase 20).
     """

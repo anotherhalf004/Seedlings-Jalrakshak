@@ -10,6 +10,14 @@ Implements:
 
 import json
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 DEFAULT_SHORTAGE_CONFIG = {
     "units": "MLD",
@@ -30,9 +38,13 @@ def load_shortage_config(config_path=None):
     if os.path.exists(config_path):
         try:
             with open(config_path, "r") as f:
-                return json.load(f)
-        except Exception:
+                config = json.load(f)
+                logger.info(f"Loaded shortage config from {config_path}")
+                return config
+        except Exception as e:
+            logger.warning(f"Failed to load config from {config_path}, using defaults: {str(e)}")
             return DEFAULT_SHORTAGE_CONFIG
+    logger.info(f"Config file not found at {config_path}, using defaults")
     return DEFAULT_SHORTAGE_CONFIG
 
 

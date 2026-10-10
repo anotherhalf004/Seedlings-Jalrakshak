@@ -24,3 +24,9 @@ Thumbs.db
 # Environment Variables
 .env
 *.env
+
+# Graft index
+graft/
+
+# Vite cache
+.vite-cache/
