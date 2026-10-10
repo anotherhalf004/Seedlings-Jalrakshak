@@ -1,0 +1,55 @@
+name: ML Pipeline CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "ml/**"
+      - "data/**"
+      - "models/**"
+      - "requirements.txt"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "ml/**"
+      - "data/**"
+      - "models/**"
+      - "requirements.txt"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Test shortage engine
+        run: |
+          python -c "from ml.shortage_engine import compute_shortage, load_shortage_config; res = compute_shortage(100.0, 60.0); assert res['shortage_amount_mld'] == 40.0; print('Shortage engine tests passed')"
+
+      - name: Test model loading
+        run: |
+          python -c "from ml.predict import predict_water_crisis; import joblib; model = joblib.load('models/demand_model.joblib'); print('Model loading test passed')"
+
+      - name: Run ML pipeline test
+        run: |
+          python -c "from ml.predict import predict_water_crisis; result = predict_water_crisis(city='Bengaluru', population=8443675, gw_fall_pct=91.67, state_tap_water_coverage_pct=89.70, rainfall_period_dep_pct=-11.0); print('ML pipeline test passed')"
