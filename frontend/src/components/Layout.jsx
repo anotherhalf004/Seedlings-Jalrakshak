@@ -11,16 +11,17 @@ const NAV_ITEMS = [
 
 export default function Layout({ activeTab, onTabChange, children }) {
   const [apiStatus, setApiStatus] = useState('checking') // 'online' | 'offline' | 'checking'
-  const [isDark, setIsDark] = useState(true)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark')
+    }
+    return true
+  })
 
   useEffect(() => {
     checkHealth()
       .then(() => setApiStatus('online'))
       .catch(() => setApiStatus('offline'))
-
-    // Check system or initial class on <html>
-    const isDarkMode = document.documentElement.classList.contains('dark')
-    setIsDark(isDarkMode)
   }, [])
 
   const toggleTheme = () => {

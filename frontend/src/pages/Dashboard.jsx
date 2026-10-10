@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Droplets, AlertTriangle, TrendingDown, Activity, Search, ChevronUp, ChevronDown, X } from 'lucide-react'
 import NumberFlow from '@number-flow/react'
-import { RiskBadge, getRiskColor } from '../components/RiskBadge'
+import { RiskBadge } from '../components/RiskBadge'
+import { getRiskColor } from '../lib/utils'
 import { WaterBalanceChart, RiskDistributionChart, GroundwaterRadar } from '../components/Charts'
 import { LoadingShimmer } from '../components/LoadingShimmer'
 
@@ -212,14 +213,14 @@ function CityModal({ city, onClose }) {
         <div className="p-4 grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5 text-xs">
             {[
-              { label: 'Population', value: (city.population_estimated / 1e6).toFixed(2) + 'M', color: 'text-foreground' },
-              { label: 'GW Wells', value: city.monitoring_wells_count, color: 'text-primary' },
-              { label: 'Stress Index', value: city.groundwater_stress_index.toFixed(1), color: 'text-amber-500' },
-              { label: 'Demand', value: city.benchmark_demand_mld.toFixed(0) + ' MLD', color: 'text-primary' },
-              { label: 'Supply', value: city.estimated_supply_mld.toFixed(0) + ' MLD', color: 'text-emerald-500' },
-              { label: 'Deficit', value: city.estimated_shortage_mld.toFixed(0) + ' MLD (' + city.shortage_percentage.toFixed(1) + '%)', color: 'text-destructive' },
-              { label: 'NRW Loss', value: city.nrw_loss_percentage.toFixed(1) + '%', color: 'text-amber-500' },
-              { label: 'Unaccounted', value: city.unaccounted_water_mld.toFixed(0) + ' MLD', color: 'text-orange-500' },
+              { label: 'Population', value: (city.population_estimated ? (city.population_estimated / 1e6).toFixed(2) + 'M' : 'N/A'), color: 'text-foreground' },
+              { label: 'GW Wells', value: city.monitoring_wells_count ?? 'N/A', color: 'text-primary' },
+              { label: 'Stress Index', value: (city.groundwater_stress_index ?? 0).toFixed(1), color: 'text-amber-500' },
+              { label: 'Demand', value: (city.benchmark_demand_mld ?? 0).toFixed(0) + ' MLD', color: 'text-primary' },
+              { label: 'Supply', value: (city.estimated_supply_mld ?? 0).toFixed(0) + ' MLD', color: 'text-emerald-500' },
+              { label: 'Deficit', value: (city.estimated_shortage_mld ?? 0).toFixed(0) + ' MLD (' + (city.shortage_percentage ?? 0).toFixed(1) + '%)', color: 'text-destructive' },
+              { label: 'NRW Loss', value: (city.nrw_loss_percentage ?? 0).toFixed(1) + '%', color: 'text-amber-500' },
+              { label: 'Unaccounted', value: (city.unaccounted_water_mld ?? 0).toFixed(0) + ' MLD', color: 'text-orange-500' },
             ].map(({ label, value, color }) => (
               <div key={label} className="flex items-center justify-between py-1.5 border-b border-border">
                 <span className="font-sans text-muted-foreground">{label}</span>

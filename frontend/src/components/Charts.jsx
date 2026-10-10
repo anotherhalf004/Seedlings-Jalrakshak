@@ -3,9 +3,6 @@ import ReactECharts from 'echarts-for-react'
 import { cn } from '../lib/utils'
 export { CityWaterMap as WaterBalanceChart } from './CityWaterMap'
 
-// ─── Shared ECharts styling ─────────────────────────────────────────────────
-const GRID = { left: 16, right: 16, top: 28, bottom: 16, containLabel: true }
-
 /**
  * RiskDistributionChart — evilcharts-style interactive donut chart of shortage risk tiers
  */
@@ -132,7 +129,7 @@ export function RiskDistributionChart({ cities, height = 320 }) {
   }
 
   return (
-    <div className="chart-container flex flex-col justify-between h-full">
+    <div className="chart-container flex flex-col justify-between h-full" style={{ minHeight: height }}>
       <div className="flex items-center justify-between mb-1">
         <span className="text-[11px] font-sans font-semibold text-foreground uppercase tracking-wider block">
           Risk Category Distribution

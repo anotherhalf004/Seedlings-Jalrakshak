@@ -37,6 +37,12 @@
       "skillPath": "plugin/skills/agentmemory-rest-api/SKILL.md",
       "computedHash": "d450e70eb2f3ff5997ff6406d7198c3168568f41f19b9dcce6027231421d2cb9"
     },
+    "architecture-blueprint-generator": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/architecture-blueprint-generator/SKILL.md",
+      "computedHash": "9b20f13d1d96ba1c2550e1ce535f932e943c42939d3fae906a9e0d6c1bfb471a"
+    },
     "commit-context": {
       "source": "rohitg00/agentmemory",
       "sourceType": "github",

@@ -23,8 +23,10 @@ DEFAULT_SHORTAGE_CONFIG = {
     "non_domestic_factor": 1.15
 }
 
-def load_shortage_config(config_path="ml/shortage_config.json"):
+def load_shortage_config(config_path=None):
     """Load configurable thresholds from JSON or fallback to defaults."""
+    if config_path is None:
+        config_path = os.path.join(os.path.dirname(__file__), "shortage_config.json")
     if os.path.exists(config_path):
         try:
             with open(config_path, "r") as f:
@@ -32,6 +34,7 @@ def load_shortage_config(config_path="ml/shortage_config.json"):
         except Exception:
             return DEFAULT_SHORTAGE_CONFIG
     return DEFAULT_SHORTAGE_CONFIG
+
 
 def compute_shortage(predicted_demand_mld: float, predicted_supply_mld: float, config=None):
     """

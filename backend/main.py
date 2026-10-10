@@ -45,6 +45,45 @@ def get_master_df():
         return pd.read_csv(MASTER_DATA_PATH)
     return pd.DataFrame()
 
+def find_city_in_df(df: pd.DataFrame, city_name: str):
+    """Finds a matching city row handling formatting, parentheses, and common aliases."""
+    if df.empty or not city_name:
+        return None
+    target = city_name.strip().lower()
+    # 1. Exact case-insensitive match
+    match = df[df["city"].str.lower() == target]
+    if not match.empty:
+        return match.iloc[0]
+    # 2. Match without parenthesis (e.g. "Patna" -> "Patna (phreatic)")
+    clean_series = df["city"].str.replace(r"\s*\(.*?\)", "", regex=True).str.strip().str.lower()
+    match = df[clean_series == target]
+    if not match.empty:
+        return match.iloc[0]
+    # 3. Known Indian city alias matching
+    aliases = {
+        "bengaluru": "bangalore",
+        "bangalore": "bengaluru",
+        "gurgaon": "gurugram",
+        "gurugram": "gurgaon",
+        "mysore": "mysuru",
+        "mysuru": "mysore",
+        "allahabad": "prayagraj",
+        "prayagraj": "allahabad"
+    }
+    alt = aliases.get(target)
+    if alt:
+        match = df[clean_series == alt]
+        if not match.empty:
+            return match.iloc[0]
+        match = df[df["city"].str.lower().str.contains(alt, regex=False)]
+        if not match.empty:
+            return match.iloc[0]
+    # 4. Substring match
+    match = df[clean_series.str.contains(target, regex=False)]
+    if not match.empty:
+        return match.iloc[0]
+    return None
+
 # ----------------- PYDANTIC SCHEMAS -----------------
 
 class PredictionRequest(BaseModel):
@@ -84,11 +123,7 @@ def list_cities():
     if df.empty:
         raise HTTPException(status_code=500, detail="Master dataset not found.")
         
-    records = df[[
-        "city", "state_ut", "population_estimated", "groundwater_stress_index",
-        "benchmark_demand_mld", "estimated_supply_mld", "estimated_shortage_mld",
-        "shortage_percentage", "shortage_risk_category", "nrw_loss_percentage"
-    ]].to_dict(orient="records")
+    records = df.replace({np.nan: None}).to_dict(orient="records")
     
     return {
         "total_cities": len(records),
@@ -107,17 +142,16 @@ def predict(request: PredictionRequest):
     rain_dep = request.rainfall_period_dep_pct
     
     if not df.empty:
-        match = df[df["city"].str.lower() == request.city.strip().lower()]
-        if not match.empty:
-            row = match.iloc[0]
+        matched_row = find_city_in_df(df, request.city)
+        if matched_row is not None:
             if pop is None:
-                pop = float(row["population_estimated"])
+                pop = float(matched_row["population_estimated"])
             if gw_fall == 50.0:
-                gw_fall = float(row["gw_fall_pct"])
+                gw_fall = float(matched_row["gw_fall_pct"])
             if tap_pct == 85.0:
-                tap_pct = float(row["state_tap_water_coverage_pct"])
+                tap_pct = float(matched_row["state_tap_water_coverage_pct"])
             if rain_dep == -15.0:
-                rain_dep = float(row["rainfall_period_dep_pct"])
+                rain_dep = float(matched_row["rainfall_period_dep_pct"])
                 
     pop = pop or 1000000.0
     
@@ -145,13 +179,14 @@ def what_if_simulator(req: SimulatorRequest):
     supply = req.supply_mld
     
     if (demand is None or supply is None) and not df.empty:
-        match = df[df["city"].str.lower() == req.city.strip().lower()]
-        if not match.empty:
-            demand = float(match.iloc[0]["benchmark_demand_mld"])
-            supply = float(match.iloc[0]["estimated_supply_mld"])
+        matched_row = find_city_in_df(df, req.city)
+        if matched_row is not None:
+            demand = float(matched_row["benchmark_demand_mld"])
+            supply = float(matched_row["estimated_supply_mld"])
             
     demand = demand or 500.0
     supply = supply or 350.0
+
     
     initial_shortage = max(0.0, demand - supply)
     initial_shortage_pct = (initial_shortage / demand * 100.0) if demand > 0 else 0.0

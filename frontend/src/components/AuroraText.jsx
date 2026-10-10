@@ -3,7 +3,7 @@
  * Renders text with an animated aurora/shimmer gradient, matching the JalRakshak
  * ocean palette. Inspired by reactbits.dev AuroraText pattern.
  */
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 
 export function AuroraText({ children, className = '', speed = 3, colors }) {
   const textRef = useRef(null)

@@ -73,12 +73,25 @@ export default function Simulator({ cities }) {
                 list="sim-city-list"
                 placeholder="Select urban center…"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value
+                  setCity(val)
+                  const cleanInput = val.trim().toLowerCase()
+                  const match = (cities || []).find((c) => {
+                    const cleanCity = c.city.replace(/\s*\(.*?\)/g, '').trim().toLowerCase()
+                    return cleanCity === cleanInput || c.city.toLowerCase() === cleanInput
+                  })
+                  if (match && typeof match.nrw_loss_percentage === 'number') {
+                    const nrw = +match.nrw_loss_percentage.toFixed(1)
+                    setCurrentNRW(nrw)
+                    setTargetNRW(Math.max(1, +(nrw * 0.6).toFixed(1)))
+                  }
+                }}
                 className="w-full px-3 py-1.5 bg-muted border border-border rounded text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
                 required
               />
               <datalist id="sim-city-list">
-                {cities.map((c) => <option key={c.city} value={c.city.replace(' (phreatic)', '').replace(' (confined)', '')} />)}
+                {cities.map((c) => <option key={c.city} value={c.city.replace(/\s*\(.*?\)/g, '').trim()} />)}
               </datalist>
             </div>
 

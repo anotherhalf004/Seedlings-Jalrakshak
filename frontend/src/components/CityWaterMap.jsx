@@ -139,12 +139,12 @@ function drawBubbles(cities, L, map, onSelect) {
     const coords = resolveCoords(c.city)
     if (!coords) return
 
-    const demand   = +c.benchmark_demand_mld.toFixed(1)
-    const supply   = +c.estimated_supply_mld.toFixed(1)
-    const shortage = +c.estimated_shortage_mld.toFixed(1)
+    const demand   = +(c.benchmark_demand_mld ?? 0).toFixed(1)
+    const supply   = +(c.estimated_supply_mld ?? 0).toFixed(1)
+    const shortage = +(c.estimated_shortage_mld ?? 0).toFixed(1)
     const color    = balanceColor(shortage, demand)
-    const radius   = 8 + (demand / maxDemand) * 24
-    const label    = c.city.replace(/\s*\((phreatic|confined)\)/gi, '')
+    const radius   = 8 + (demand / (maxDemand || 1)) * 24
+    const label    = c.city.replace(/\s*\(.*?\)/gi, '').trim()
 
     const marker = L.circleMarker(coords, {
       radius,
@@ -187,11 +187,14 @@ export function CityWaterMap({ cities, height = 340, onSelect }) {
 
     Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]).then(([mod]) => {
       if (cancelled || !containerRef.current) return
-      const L = mod.default
+      const L = mod.default || mod
 
       if (mapRef.current) {
         mapRef.current.map.remove()
         mapRef.current = null
+      }
+      if (containerRef.current && containerRef.current._leaflet_id) {
+        containerRef.current._leaflet_id = null
       }
 
       const map = L.map(containerRef.current, {
@@ -208,6 +211,7 @@ export function CityWaterMap({ cities, height = 340, onSelect }) {
 
       mapRef.current = { map, L }
       drawBubbles(cities, L, map, onSelect)
+      setTimeout(() => { map.invalidateSize() }, 150)
     })
 
     return () => {

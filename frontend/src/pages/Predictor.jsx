@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import NumberFlow from '@number-flow/react'
 import { Zap, Send, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { RiskBadge } from '../components/RiskBadge'
 import { ShortageGauge, GroundwaterRadar } from '../components/Charts'
@@ -60,19 +59,27 @@ export default function Predictor({ cities }) {
   function set(key, val) { setForm((f) => ({ ...f, [key]: val })) }
 
   function autofill(cityName) {
-    const c = cities.find((x) => x.city.toLowerCase() === cityName.toLowerCase())
+    if (!cityName) return
+    const cleanInput = cityName.trim().toLowerCase()
+    const c = (cities || []).find((x) => {
+      const cleanCity = x.city.replace(/\s*\(.*?\)/g, '').trim().toLowerCase()
+      if (cleanCity === cleanInput || x.city.toLowerCase() === cleanInput) return true
+      if (cleanInput === 'bengaluru' && x.city.toLowerCase().includes('bangalore')) return true
+      if (cleanInput === 'bangalore' && x.city.toLowerCase().includes('bengaluru')) return true
+      return false
+    })
     if (c) {
       setForm((f) => ({
         ...f,
-        city: c.city,
-        population: c.population_estimated,
-        gw_fall_pct: c.gw_fall_pct,
-        gw_fall_gt_4m_pct: c.gw_fall_gt_4m_pct,
-        gw_rise_pct: c.gw_rise_pct,
-        state_tap_water_coverage_pct: c.state_tap_water_coverage_pct,
+        city: c.city.replace(/\s*\(.*?\)/g, '').trim(),
+        population: c.population_estimated ?? '',
+        gw_fall_pct: c.gw_fall_pct ?? 50,
+        gw_fall_gt_4m_pct: c.gw_fall_gt_4m_pct ?? 10,
+        gw_rise_pct: c.gw_rise_pct ?? 20,
+        state_tap_water_coverage_pct: c.state_tap_water_coverage_pct ?? 75,
         rainfall_period_actual_mm: c.rainfall_period_actual_mm ?? 20,
         rainfall_period_dep_pct: c.rainfall_period_dep_pct ?? -15,
-        monitoring_wells_count: c.monitoring_wells_count,
+        monitoring_wells_count: c.monitoring_wells_count ?? 10,
       }))
     }
   }

@@ -69,8 +69,9 @@ def predict_water_crisis(
     estimated_supply_mld = round(base_demand_mld * supply_ratio, 2)
     
     # Try using trained ML models if saved models exist
-    demand_model_path = "models/demand_model.joblib"
-    supply_model_path = "models/supply_model.joblib"
+    proj_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    demand_model_path = os.path.join(proj_root, "models", "demand_model.joblib")
+    supply_model_path = os.path.join(proj_root, "models", "supply_model.joblib")
     
     if HAS_JOBLIB and os.path.exists(demand_model_path) and os.path.exists(supply_model_path):
         try:
